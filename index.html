@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Bewerbungstracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: weiße Seite. Kopf, "Als Nächstes", fester Entscheidungsbaum über die volle Breite (schmal als eingerückte Liste), darunter Auge/Angebote und die Details. Bewusst nur helles Design. */
+:root{
+  --bg:#FFFFFF; --soft:#F7F7F8; --hover:#F1F1F3; --ink:#0B0B0F; --ink2:#3F3F46; --muted:#7E7E88; --line:#E7E7EB; --line2:#CFCFD6;
+  --c-prep:#E5A500; --c-bew:#18181B; --c-t:#EA580C; --c-g:#0EA5E9; --c-g2:#1D4ED8; --c-z:#16A34A; --c-a:#DC2626;
+  --late:#C2410C;
+  --font:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
+.page{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:26px 72px;display:flex;flex-direction:column;gap:24px}
+.c-prep{--c:var(--c-prep)} .c-bew{--c:var(--c-bew)} .c-t{--c:var(--c-t)} .c-g{--c:var(--c-g)} .c-g2{--c:var(--c-g2)} .c-z{--c:var(--c-z)} .c-a{--c:var(--c-a)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c,var(--line2));flex:none;display:inline-block}
+
+/* Kopf */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px}
+.brand{margin:0;font-size:20px;font-weight:600;letter-spacing:-.02em}
+.stats{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:13px;color:var(--muted)}
+.stats li{display:inline-flex;align-items:center;gap:7px}
+.stats b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{height:32px;border-radius:8px;padding:0 12px;border:1px solid var(--line2);background:var(--bg);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--hover)}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.primary:hover:not(:disabled){background:#27272A}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.status{font-size:12px;color:var(--muted)}
+.status.err{color:var(--c-a)}
+
+/* Als Nächstes */
+.nexts-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px 6px}
+.sl{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.agenda{list-style:none;margin:0;padding:0}
+.agenda li{display:grid;grid-template-columns:78px 12px minmax(0,1fr) auto;gap:10px;align-items:center;min-height:36px;border-top:1px solid var(--line);padding:0 4px;cursor:pointer}
+.agenda li:first-child{border-top:0}
+.agenda li:hover{background:var(--soft)}
+.agenda li.static{cursor:default;grid-template-columns:1fr}
+.agenda li.static:hover{background:none}
+.agenda .d{font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.agenda .w{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agenda .w span{color:var(--muted)}
+.tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--hover);color:var(--ink2)}
+.tag.soon{background:var(--c,var(--ink));color:#fff}
+.tag.late{background:#FFEDD5;color:var(--late)}
+.tag.need{background:#FEF3C7;color:#92400E}
+.linkbtn{border:0;background:none;padding:0;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}
+.linkbtn:hover{color:var(--ink)}
+
+/* Baum */
+.tree{position:relative;width:100%;min-height:120px}
+#wires{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.nb{position:absolute;border-radius:12px;padding:6px 8px 10px;margin:-6px 0 0 -8px;transition:background .12s,box-shadow .12s}
+.nb.sel{background:var(--soft);box-shadow:inset 0 0 0 1px var(--line)}
+.nb.drop-on{background:color-mix(in srgb,var(--c) 10%,#fff);box-shadow:inset 0 0 0 2px var(--c)}
+body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
+.nh{display:flex;align-items:center;gap:8px;height:26px;cursor:pointer;border-radius:7px;min-width:0;padding-right:6px}
+.nh:hover .nl{text-decoration:underline;text-underline-offset:3px}
+.nd{width:14px;height:14px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 3px var(--bg)}
+.nl{font-size:13.5px;font-weight:600;white-space:nowrap}
+.nc{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.nb.empty .nl{color:var(--muted);font-weight:500}
+.ents{display:flex;flex-direction:column;gap:6px;margin:6px 0 0 14px}
+.ent{position:relative;height:70px;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:6px 10px 6px 12px;border:1px solid var(--line2);border-radius:9px;background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x pan-y;min-width:0}
+.ent:hover{border-color:var(--c);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ent.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.ent.soon{border-color:var(--c);box-shadow:0 0 0 1.5px var(--c),0 2px 10px color-mix(in srgb,var(--c) 30%,transparent)}
+.ent.lifted{opacity:.3}
+.grip{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:4px;height:18px;background:radial-gradient(circle,var(--line2) 1px,transparent 1.4px) 0 0/4px 4px;opacity:.9}
+.en{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.er{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.art{font-family:var(--mono);font-size:10.5px;font-weight:500;color:var(--ink2);background:var(--hover);border-radius:4px;padding:0 4px;margin-left:5px}
+.es{font-size:11.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2);margin-top:2px}
+.es.muted{color:var(--muted)}
+.es.late{color:var(--late);font-weight:500}
+.es.ok{color:var(--c-z);font-weight:600}
+.es .b{display:inline-block;font-weight:600;color:#fff;background:var(--c);border-radius:5px;padding:0 6px}
+.need{display:flex;align-items:center;gap:6px;height:22px;margin-top:2px;padding:0 4px 0 7px;border:1px dashed var(--c);border-radius:6px;background:color-mix(in srgb,var(--c) 9%,#fff);cursor:text}
+.need span{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.need input{border:0;background:transparent;font-family:var(--mono);font-size:11.5px;padding:0;min-width:0;flex:1;outline:none;color:var(--ink)}
+.c-bew .need{border-color:var(--c-prep);background:#FFFBEB}
+.more{margin:4px 0 0 14px;border:0;background:none;padding:2px 0;font-size:12px;color:var(--muted);text-align:left}
+.more:hover{color:var(--ink)}
+.ghostchip{position:fixed;z-index:50;pointer-events:none;padding:8px 12px;border-radius:9px;background:var(--bg);border:1px solid var(--ink);box-shadow:0 12px 30px rgba(0,0,0,.18);font-size:13px;font-weight:600;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translate(-18px,-18px) rotate(-1.5deg)}
+
+/* schmal: eingerückte Liste */
+.tree.outline .nb{position:relative;left:auto!important;top:auto!important;width:auto!important;margin:0;padding:6px 8px 8px}
+.tree.outline .nbw{position:relative;border-left:2px solid var(--line);margin-left:6px;padding-left:12px}
+.tree.outline .nbw.root{border-left:0;margin-left:0;padding-left:0}
+
+/* Unter dem Baum */
+.below{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:18px}
+.toolbar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.tb{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line2);background:var(--bg);font-size:13px;font-weight:500;color:var(--ink2)}
+.tb:hover{background:var(--hover)}
+.tb[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tb svg{width:18px;height:18px}
+.tb .n{font-family:var(--mono);font-size:12px;opacity:.75}
+.dh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.crumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:600;margin:0}
+.crumb .sep{color:var(--line2);font-weight:400}
+.crumb .cnt{font-family:var(--mono);font-weight:400;font-size:12.5px;color:var(--muted);margin-left:4px}
+.xbtn{width:32px;height:32px;border-radius:8px;border:0;background:none;color:var(--muted);font-size:15px}
+.xbtn:hover{background:var(--hover);color:var(--ink)}
+.ctrl{display:flex;flex-direction:column;gap:10px}
+.ctrl .r{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ctrl .lab{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:92px;flex:none}
+.pill{height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line2);background:var(--bg);font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.pill:hover{background:var(--hover)}
+.pill[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pill .dot{width:8px;height:8px;box-shadow:0 0 0 1.5px #fff}
+.seg{display:inline-grid;grid-auto-flow:column;gap:3px;padding:3px;border-radius:9px;background:var(--hover)}
+.seg button{height:28px;min-width:44px;padding:0 10px;border:0;border-radius:7px;background:transparent;font-size:12.5px;font-weight:500;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:12px minmax(0,2fr) minmax(0,1fr) minmax(0,1.8fr) 84px;gap:14px;align-items:center;min-height:48px;padding:4px 6px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:hover{background:var(--soft)}
+.row .co{min-width:0}
+.row .co > b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .co > span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .o{font-size:12.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .st{min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .st small{display:block;font-size:11.5px;color:var(--muted)}
+.row .st small.late{color:var(--late)}
+.row .st small.soon{color:var(--ink);font-weight:600}
+.row .d{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.row.offer{grid-template-columns:12px minmax(0,2fr) 96px minmax(0,1.4fr) minmax(0,1fr)}
+.empty-msg{color:var(--muted);font-size:13px;margin:6px 0}
+@media (max-width:640px){ .row,.row.offer{grid-template-columns:12px minmax(0,1fr) minmax(0,1fr)} .row .o,.row .d,.row.offer .zd{display:none} .ctrl .lab{width:auto} }
+
+/* Detail */
+.job{display:flex;flex-direction:column;gap:22px}
+.back{border:0;background:none;padding:0;font-size:12.5px;color:var(--muted)}
+.back:hover{color:var(--ink)}
+.bare{border:0;background:transparent;width:100%;padding:5px 7px;margin-left:-7px;border-radius:6px;outline:none}
+.bare:hover{background:var(--soft)}
+.bare:focus{background:var(--soft);box-shadow:inset 0 0 0 1px var(--line2)}
+.bare::placeholder{color:var(--muted)}
+.t1{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.t2{font-size:15px;color:var(--ink2)}
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.step{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:4px 12px 4px 9px;font-size:13px;font-weight:500}
+.arrow{color:var(--line2)}
+.nexts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.nx{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px}
+.nx:hover{border-color:var(--c);background:color-mix(in srgb,var(--c) 8%,#fff)}
+.nx.backstep{color:var(--muted)}
+.dates{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.drow{display:grid;grid-template-columns:12px minmax(0,1fr) 150px minmax(0,1fr);gap:12px;align-items:center;min-height:40px;border-bottom:1px solid var(--line);padding:0 4px}
+.drow.cur{background:color-mix(in srgb,var(--c) 7%,#fff)}
+.drow .dl{font-size:13px;font-weight:500}
+.drow .dl small{display:block;font-size:11.5px;font-weight:400;color:var(--muted)}
+.drow input{font-family:var(--mono);font-size:12.5px}
+.drow .info{font-size:12px;color:var(--muted)}
+.drow .info.late{color:var(--late)}
+.drow .info.soon{color:var(--ink);font-weight:600}
+@media (max-width:640px){ .drow{grid-template-columns:12px minmax(0,1fr) 140px} .drow .info{grid-column:2/-1;padding-bottom:6px} }
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 28px}
+@media (max-width:640px){ .fields{grid-template-columns:minmax(0,1fr)} }
+.f{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:center;min-height:38px;gap:8px;border-bottom:1px solid var(--line)}
+.f > span{font-size:12.5px;color:var(--muted)}
+.f.wide{grid-column:1/-1}
+textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
+.foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.savestate{font-size:12px;color:var(--muted)}
+.btn.del{color:var(--c-a)}
+.btn.del.solid{background:var(--c-a);color:#fff;border-color:var(--c-a)}
+.syncpill{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);background:var(--bg);font-size:12.5px;font-weight:500;color:var(--ink2);white-space:nowrap}
+.syncpill:hover{background:var(--hover)}
+.syncpill .sdot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.syncpill.s-ok .sdot{background:var(--c-z)}
+.syncpill.s-busy .sdot{background:var(--c-prep);animation:pulse 1s ease-in-out infinite}
+.syncpill.s-warn{color:#92400E;border-color:#F5D27A;background:#FFFBEB}
+.syncpill.s-warn .sdot{background:var(--c-prep)}
+.syncpill.s-err{color:var(--c-a);border-color:#F3B4B4;background:#FEF2F2}
+.syncpill.s-err .sdot{background:var(--c-a)}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.syncpill.s-busy .sdot{animation:none}}
+.settings input{height:32px;border:1px solid var(--line2);border-radius:8px;padding:0 10px;font-family:var(--mono);font-size:12.5px;min-width:0;width:min(320px,100%)}
+.importbar p small + small{margin-top:4px}
+.importbar{border:1.5px solid var(--ink);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.importbar p{margin:0;font-size:13.5px}
+.importbar p small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.importbar .grp{display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;z-index:60;max-width:calc(100% - 32px);display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.toast button{background:none;border:0;color:#fff;font-weight:600;padding:0;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <h1 class="brand">Bewerbungen</h1>
+      <ul class="stats" id="stats"><li>wird geladen …</li></ul>
+    </div>
+    <div class="acts">
+      <span class="status" id="status" aria-live="polite"></span>
+      <button type="button" class="syncpill s-busy" id="syncPill" aria-live="polite" title="Synchronisierung mit GitHub"><span class="sdot"></span><span>Lädt …</span></button>
+      <button class="btn" id="undoBtn" type="button" disabled>↶ Rückgängig</button>
+      <button class="btn" id="exportBtn" type="button" title="Alle Bewerbungen als JSON-Datei speichern">Export</button>
+      <button class="btn" id="importBtn" type="button" title="Bewerbungen aus einer JSON-Datei laden">Import</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <button class="btn primary" id="addBtn" type="button">+ Neue Bewerbung</button>
+    </div>
+  </header>
+
+  <div id="settingsBar" hidden></div>
+  <div id="lockNote" class="importbar" hidden><p><b>Deine Bewerbungsdaten sind privat.</b><small>Sie liegen im privaten Repository bw-daten. Klick oben auf „Token eintragen“ und gib deinen Fine-grained Token ein, um sie auf diesem Gerät zu sehen und zu bearbeiten.</small></p></div>
+  <div id="importBar" hidden></div>
+
+  <section class="nexts-box" id="nextBox" aria-labelledby="nextL">
+    <p class="sl" id="nextL">Als Nächstes</p>
+    <ul class="agenda" id="agenda"></ul>
+  </section>
+
+  <div class="tree" id="tree" aria-label="Bewerbungspfad"></div>
+
+  <div class="below">
+    <div class="toolbar">
+      <button type="button" class="tb" id="eyeBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Alle Bewerbungen</button>
+      <button type="button" class="tb" id="offerBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.6L16 9.5"/></svg>Angebote <span class="n" id="offerN"></span></button>
+    </div>
+    <div id="detail"></div>
+  </div>
+</div>
+<div id="toastHost"></div>
+
+<script>
+(function(){
+  "use strict";
+  /* ---------- fester Pfad ---------- */
+  var NODES={}, ORDER=[];
+  function def(id,l,c,ch){ NODES[id]={id:id,l:l,c:c,ch:ch||[]}; ORDER.push(id); }
+  def("prep","In Bearbeitung","prep",["B"]);
+  def("B","Bewerbung","bew",["B.Z","B.G","B.T","B.A"]);
+  def("B.Z","Zusage","z");
+  def("B.G","Gespräch","g",["B.G.Z","B.G.G2","B.G.A"]);
+  def("B.G.Z","Zusage","z");
+  def("B.G.G2","2. Gespräch","g2",["B.G.G2.Z","B.G.G2.A"]);
+  def("B.G.G2.Z","Zusage","z"); def("B.G.G2.A","Absage","a");
+  def("B.G.A","Absage","a");
+  def("B.T","Test","t",["B.T.Z","B.T.G","B.T.A"]);
+  def("B.T.Z","Zusage","z");
+  def("B.T.G","Gespräch","g",["B.T.G.Z","B.T.G.G2","B.T.G.A"]);
+  def("B.T.G.Z","Zusage","z");
+  def("B.T.G.G2","2. Gespräch","g2",["B.T.G.G2.Z","B.T.G.G2.A"]);
+  def("B.T.G.G2.Z","Zusage","z"); def("B.T.G.G2.A","Absage","a");
+  def("B.T.G.A","Absage","a");
+  def("B.T.A","Absage","a");
+  def("B.A","Absage","a");
+  var STUFEN=[["prep","In Bearbeitung"],["bew","Bewerbung"],["t","Test"],["g","Gespräch"],["g2","2. Gespräch"],["z","Zusage"],["a","Absage"]];
+  var ARTEN=[["Vz","Vollzeit"],["Tz","Teilzeit"],["Tr","Trainee"],["Pr","Praktikum"]];
+  var TERMIN={t:1,g:1,g2:1};
+  function depth(id){ return id==="prep"?0:id.split(".").length-1; }
+  function parentOf(id){ if(id==="prep") return null; if(id==="B") return "prep"; return id.slice(0,id.lastIndexOf(".")); }
+  function chain(id){ if(id==="prep") return ["prep"]; var p=id.split("."), out=[]; for(var i=1;i<=p.length;i++) out.push(p.slice(0,i).join(".")); return out; }
+  function chainLabel(id){ return chain(id).map(function(k){ return NODES[k].l; }).join(" → "); }
+
+  var rows=[], loaded=false, col=null, canWrite=true, dbState="pending";
+  var pending={}, timers={}, inflight={}, undoStack=[], expanded={}, nextAll=false, treeDirty=false;
+  var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, confirmDel:false};
+  try{ var sv=JSON.parse(localStorage.getItem("bt-ui")||"{}"); if(sv.sort) ui.sort=sv.sort; }catch(e){}
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function isIso(s){ return typeof s==="string" && /^\d{4}-\d{2}-\d{2}$/.test(s); }
+  function fmt(iso){ if(!isIso(iso)) return ""; var p=iso.split("-"); return p[2]+"."+p[1]+"."+p[0]; }
+  function fmtS(iso){ if(!isIso(iso)) return ""; var p=iso.split("-"); return p[2]+"."+p[1]+"."; }
+  function days(a,b){ if(!isIso(a)||!isIso(b)) return null; return Math.round((Date.parse(b+"T12:00:00Z")-Date.parse(a+"T12:00:00Z"))/864e5); }
+  function tage(n){ return n===1?"1 Tag":n+" Tagen"; }
+  function rel(n){ return n===0?"heute":n===1?"morgen":"in "+n+" Tagen"; }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function toast(msg, undo){ var h=$("toastHost"); h.innerHTML='<div class="toast" role="status"><span>'+esc(msg)+'</span>'+(undo?'<button type="button" data-act="undo">Rückgängig</button>':'')+'</div>'; clearTimeout(toast._t); toast._t=setTimeout(function(){h.innerHTML="";}, undo?6000:2600); }
+  function setStatus(m,err){ var s=$("status"); s.textContent=m||""; s.className="status"+(err?" err":""); }
+
+  /* ---------- Daten ---------- */
+  function view(id){ var r=null; for(var i=0;i<rows.length;i++) if(rows[i].id===id){ r=rows[i]; break; } if(!r) return null; return (pending[id]||inflight[id]) ? Object.assign({}, r, inflight[id]||{}, pending[id]||{}) : r; }
+  function all(){ return rows.map(function(r){ return view(r.id); }); }
+  function pfad(r){ if(r.pfad && NODES[r.pfad]) return r.pfad; return (Array.isArray(r.schritte)&&r.schritte.length) ? "B" : "prep"; }
+  function dates(r){ return Array.isArray(r.daten) ? r.daten.filter(function(x){ return x && NODES[x.k]; }) : []; }
+  function dateOf(r,k){ var D=dates(r); for(var i=0;i<D.length;i++) if(D[i].k===k) return D[i].d||""; return ""; }
+  function withDate(r,k,v){ var D=dates(r).filter(function(x){ return x.k!==k; }); if(v) D.push({k:k,d:v}); return D; }
+  function role(r){ return r.rolle || r.stelle || ""; }
+  function artHtml(r){ return r.art ? '<span class="art">'+esc(r.art)+'</span>' : ''; }
+  function cOf(r){ return NODES[pfad(r)].c; }
+
+  /* Zustand einer Bewerbung: Text, Dringlichkeit, fehlendes Feld, Sortierschlüssel */
+  function info(r){
+    var p=pfad(r), n=NODES[p], t=today(), d, N;
+    if(p==="prep"){
+      if(r.schrittDatum){ N=days(t,r.schrittDatum); return {txt:(r.schritt||"Aufgabe")+" bis "+fmtS(r.schrittDatum), lvl:N<0?"late":N<=3?"soon":"muted", g:N<0?2:N<=3?0:3, v:N}; }
+      return {txt:"noch nicht beworben", lvl:"muted", g:5, v:0};
+    }
+    if(n.c==="bew"){
+      d=dateOf(r,"B"); if(!d) return {need:{k:"B",label:"Beworben am"}, g:1, v:0};
+      N=days(d,t); return {txt:"wartet seit "+tage(Math.max(N,0)), lvl:N>=14?"late":"muted", g:4, v:-N};
+    }
+    if(TERMIN[n.c]){
+      d=dateOf(r,p); if(!d) return {need:{k:p,label:"Termin am"}, g:1, v:0};
+      N=days(t,d);
+      if(N>3) return {txt:fmtS(d)+" · "+rel(N), lvl:"muted", g:3, v:N};
+      if(N>=0) return {txt:fmtS(d), badge:rel(N), lvl:"soon", g:0, v:N};
+      return {txt:"war "+fmtS(d)+" · Ergebnis offen", lvl:-N>=7?"late":"muted", g:2, v:N};
+    }
+    if(n.c==="z"){
+      if(r.entscheidung==="angenommen") return {txt:"Angebot angenommen", lvl:"ok", g:5, v:0};
+      if(r.entscheidung==="abgelehnt") return {txt:"Angebot von dir abgelehnt", lvl:"muted", g:6, v:0};
+      if(!r.frist) return {need:{k:"frist",label:"Antwort bis"}, g:1, v:0};
+      N=days(t,r.frist);
+      if(N<0) return {txt:"Frist "+fmtS(r.frist)+" abgelaufen", lvl:"late", g:2, v:N};
+      if(N<=3) return {txt:"Antwort "+fmtS(r.frist), badge:rel(N), lvl:"soon", g:0, v:N};
+      return {txt:"Antwort bis "+fmtS(r.frist), lvl:"muted", g:3, v:N};
+    }
+    d=dateOf(r,p); return {txt:"Absage"+(d?" am "+fmtS(d):""), lvl:"muted", g:7, v:-(d?Date.parse(d):0)};
+  }
+  function prioSort(a,b){ var x=info(a), y=info(b); if(x.g!==y.g) return x.g-y.g; if(x.v!==y.v) return x.v-y.v; return (a.unternehmen||"").localeCompare(b.unternehmen||"","de"); }
+  function rank(r){ var p=pfad(r), c=NODES[p].c; if(c==="z") return 100+depth(p); if(c==="a") return -100+depth(p); if(p==="prep") return -1; return depth(p)+(c==="g2"?.5:0); }
+
+  /* ---------- Speichern ---------- */
+  function errMsg(e){ var c=e&&e.code; if(c==="quota_exceeded") return "Browserspeicher voll. Bitte exportieren und alte Einträge löschen."; if(c==="no_storage") return "Dieser Browser erlaubt keinen lokalen Speicher (z. B. privates Fenster)."; return "Speichern fehlgeschlagen."; }
+  function withRetry(fn){ return fn().catch(function(e){ if(e&&e.code==="unavailable") return new Promise(function(res){ setTimeout(res,400+Math.random()*600); }).then(fn); throw e; }); }
+  function saveState(t){ var s=$("saveState"); if(s) s.textContent=t; }
+  function queue(id, patch, now){
+    if(!col||!canWrite) return;
+    pending[id]=Object.assign(pending[id]||{}, patch);
+    clearTimeout(timers[id]); saveState("Speichert …");
+    timers[id]=setTimeout(function(){ flush(id); }, now?0:650);
+  }
+  function flush(id){
+    clearTimeout(timers[id]);
+    if(inflight[id] || !pending[id] || !col) return;
+    var p=pending[id]; delete pending[id]; p.geaendert=new Date().toISOString(); inflight[id]=p;
+    withRetry(function(){ return col.doc(id).update(p); })
+      .then(function(){ saveState("Gespeichert"); })
+      .catch(function(e){ toast(errMsg(e)); if(e&&e.code==="invalid_argument") canWrite=false; })
+      .then(function(){ inflight[id]=null; if(pending[id]) flush(id); else renderAll(); });
+  }
+  function flushAll(){ Object.keys(pending).forEach(flush); }
+  function undoable(id, patch, label){
+    var r=view(id); if(!r||!col||!canWrite) return;
+    var prev={}; Object.keys(patch).forEach(function(k){ prev[k]= r[k]===undefined ? (k==="daten"?[]:"") : clone(r[k]); });
+    undoStack.push({id:id, prev:prev}); if(undoStack.length>40) undoStack.shift();
+    queue(id, patch, true); renderAll(); if(label) toast(label, true);
+  }
+  function undo(){
+    var u=undoStack.pop(); $("toastHost").innerHTML="";
+    if(!u){ renderAll(); return; }
+    if(u.snapshot){ replaceStore(u.snapshot); toast("Import rückgängig gemacht"); renderAll(); return; }
+    if(u.created){ if(ui.job===u.id) show("none"); clearTimeout(timers[u.id]); delete pending[u.id]; withRetry(function(){ return col.doc(u.id).delete(); }).then(function(){ toast("Neue Bewerbung entfernt"); }).catch(function(e){ toast(errMsg(e)); }); }
+    else if(u.deleted){ withRetry(function(){ return col.doc(u.id).set(u.deleted); }).then(function(){ toast("Wiederhergestellt"); }).catch(function(e){ toast(errMsg(e)); }); }
+    else { queue(u.id, clone(u.prev), true); toast("Rückgängig gemacht"); }
+    renderAll();
+  }
+  function moveJob(id, to){
+    var r=view(id); if(!r||!NODES[to]) return; var from=pfad(r); if(from===to) return;
+    var keep=chain(to), D=dates(r).filter(function(x){ return keep.indexOf(x.k)>=0; });
+    var c=NODES[to].c;
+    // Bewerbung, Zusage, Absage bekommen heute; Termine (Test, Gespräche) trägst du selbst ein
+    if(to!=="prep" && !TERMIN[c] && !D.some(function(x){ return x.k===to; }) && (to!=="B" || from==="prep")) D.push({k:to, d:today()});
+    var patch={pfad:to, daten:D};
+    undoable(id, patch, (r.unternehmen||"Ohne Namen")+" → "+NODES[to].l+(TERMIN[c]?". Termin eintragen":""));
+  }
+
+  /* ---------- Kopf und Als Nächstes ---------- */
+  function renderStats(){
+    var el=$("stats");
+    if(!loaded){ el.innerHTML='<li>'+(dbState==="none"?"Speichern ist in dieser Ansicht nicht verfügbar.":"wird geladen …")+'</li>'; return; }
+    var c={prep:0,run:0,z:0,a:0};
+    all().forEach(function(r){ var k=cOf(r); if(k==="prep") c.prep++; else if(k==="z") c.z++; else if(k==="a") c.a++; else c.run++; });
+    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li class="c-g"><span class="dot"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
+    $("undoBtn").disabled=!undoStack.length;
+    $("addBtn").disabled=!(loaded&&canWrite&&col&&token());
+    $("offerN").textContent=c.z?c.z:"";
+  }
+  function agendaItems(){
+    var t=today(), out=[];
+    all().forEach(function(r){
+      var p=pfad(r), n=NODES[p], c=n.c, i=info(r), d;
+      if(TERMIN[c]){
+        d=dateOf(r,p);
+        if(!d) out.push({id:r.id,c:c,d:"",co:r.unternehmen,w:n.l+" · Termin eintragen",tag:["need","Datum fehlt"]});
+        else { var N=days(t,d); if(N<0) out.push({id:r.id,c:c,d:d,co:r.unternehmen,w:n.l+" · Ergebnis eintragen",tag:["late","vorbei"]}); else if(N<=21) out.push({id:r.id,c:c,d:d,co:r.unternehmen,w:n.l,tag:[N<=3?"soon":"",rel(N)]}); }
+      }
+      if(c==="z" && !r.entscheidung){
+        if(!r.frist) out.push({id:r.id,c:c,d:"",co:r.unternehmen,w:"Angebot · Antwortfrist eintragen",tag:["need","Frist fehlt"]});
+        else { var M=days(t,r.frist); out.push({id:r.id,c:c,d:r.frist,co:r.unternehmen,w:"Antwort auf Angebot",tag:[M<0?"late":M<=3?"soon":"",M<0?"abgelaufen":rel(M)]}); }
+      }
+      if(c==="bew" && !dateOf(r,"B")) out.push({id:r.id,c:c,d:"",co:r.unternehmen,w:"Bewerbungsdatum eintragen",tag:["need","Datum fehlt"]});
+      if(c==="bew" && i.lvl==="late") out.push({id:r.id,c:c,d:dateOf(r,"B"),co:r.unternehmen,w:"seit "+tage(days(dateOf(r,"B"),t))+" keine Rückmeldung",tag:["late","nachfassen?"]});
+      if(c!=="a" && (r.schritt||r.schrittDatum)){ var A=r.schrittDatum?days(t,r.schrittDatum):null; out.push({id:r.id,c:c,d:r.schrittDatum||"",co:r.unternehmen,w:"Aufgabe: "+(r.schritt||"ohne Beschreibung"),tag:A==null?null:[A<0?"late":A<=3?"soon":"",A<0?"überfällig":rel(A)]}); }
+    });
+    out.sort(function(a,b){ var x=a.d||"0000", y=b.d||"0000"; return x<y?-1:x>y?1:0; });
+    return out;
+  }
+  function renderAgenda(){
+    var el=$("agenda"); if(!loaded){ el.innerHTML=""; return; }
+    var items=agendaItems(), show=nextAll?items:items.slice(0,5);
+    var lab=$("nextL"); lab.innerHTML='Als Nächstes'+(items.length>5?'<button type="button" class="linkbtn" data-act="nextAll">'+(nextAll?'weniger':'alle '+items.length+' anzeigen')+'</button>':'');
+    if(!items.length){ el.innerHTML='<li class="static"><span class="empty-msg" style="margin:4px 0">Keine Termine, Fristen oder Aufgaben. Sobald eine Bewerbung im Test oder Gespräch steht, erscheint ihr Termin hier.</span></li>'; return; }
+    el.innerHTML=show.map(function(it){
+      return '<li class="c-'+it.c+'" data-open-job="'+esc(it.id)+'" tabindex="0"><span class="d">'+(it.d?esc(fmt(it.d)):'–')+'</span><span class="dot"></span><span class="w">'+esc(it.co||"Ohne Namen")+' <span>· '+esc(it.w)+'</span></span>'+(it.tag?'<span class="tag '+it.tag[0]+'">'+esc(it.tag[1])+'</span>':'<span></span>')+'</li>';
+    }).join("");
+  }
+
+  /* ---------- Baum ---------- */
+  var MAXS=4, HEAD=26, ENT=70, EGAP=6, GAP=16;
+  function groups(){ var g={}; ORDER.forEach(function(k){ g[k]=[]; }); all().forEach(function(r){ g[pfad(r)].push(r); }); Object.keys(g).forEach(function(k){ g[k].sort(prioSort); }); return g; }
+  function boxH(n,key){ var s=expanded[key]?n:Math.min(n,MAXS); return HEAD + (s?6+s*(ENT+EGAP):0) + (n>MAXS?22:0) + 4; }
+  function statusHtml(r){
+    var i=info(r);
+    if(i.need){
+      var val = i.need.k==="frist" ? (r.frist||"") : dateOf(r,i.need.k);
+      return '<label class="need" title="'+esc(i.need.label)+' eintragen"><span>'+esc(i.need.label)+'</span><input type="date" data-tfield="'+esc(i.need.k)+'" data-job="'+esc(r.id)+'" value="'+esc(val)+'"'+(canWrite?'':' disabled')+'></label>';
+    }
+    return '<span class="es '+(i.lvl||"")+'">'+(i.badge?'<span class="b">'+esc(i.badge)+'</span> ':'')+esc(i.txt)+'</span>';
+  }
+  function entHtml(r){
+    var i=info(r);
+    return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,role(r),r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en">'+esc(r.unternehmen||"Ohne Namen")+'</span><span class="er">'+(esc(role(r))||'Rolle fehlt')+artHtml(r)+'</span>'+statusHtml(r)+'</div>';
+  }
+  function nodeHtml(k,G,style){
+    var n=NODES[k], list=G[k], c=list.length, show=expanded[k]?list:list.slice(0,MAXS);
+    var h='<div class="nb c-'+n.c+(c?'':' empty')+(ui.mode==="node"&&ui.node===k?' sel':'')+'" data-node="'+k+'"'+(style?' style="'+style+'"':'')+'>';
+    h+='<div class="nh" data-open-node="'+k+'" tabindex="0" role="button" aria-label="'+esc(chainLabel(k))+', '+c+' Bewerbungen"><span class="nd" data-anchor="'+k+'"></span><span class="nl">'+esc(n.l)+'</span><span class="nc">'+(c||"")+'</span></div>';
+    if(c) h+='<div class="ents">'+show.map(entHtml).join("")+'</div>';
+    if(c>MAXS) h+='<button type="button" class="more" data-act="more" data-key="'+k+'">'+(expanded[k]?'weniger':'+ '+(c-MAXS)+' weitere')+'</button>';
+    return h+'</div>';
+  }
+  var LAY=null;
+  function treeBusy(){ var a=document.activeElement; return a && $("tree").contains(a) && a.matches("input"); }
+  function renderTree(){
+    var host=$("tree");
+    if(drag){ treeDirty=true; return; }
+    if(treeBusy()){ treeDirty=true; return; }
+    treeDirty=false;
+    if(!loaded){ host.innerHTML='<p class="empty-msg">wird geladen …</p>'; host.style.height=""; return; }
+    var G=groups(), W=host.clientWidth||1000;
+    if(W<720){ renderOutline(host,G); return; }
+    host.classList.remove("outline");
+    var colW=W/5, bw=Math.max(140, colW-40);
+    var H={}, SUB={}, Y={};
+    ORDER.forEach(function(k){ H[k]=boxH(G[k].length,k); });
+    function sub(k){ var n=NODES[k]; if(!n.ch.length) return SUB[k]=H[k]; var s=0; n.ch.forEach(function(c,i){ s+=sub(c)+(i?GAP:0); }); return SUB[k]=Math.max(H[k],s); }
+    sub("B");
+    function place(k,top){
+      var n=NODES[k];
+      if(!n.ch.length){ Y[k]=top+(SUB[k]-H[k])/2; return; }
+      var s=0; n.ch.forEach(function(c,i){ s+=SUB[c]+(i?GAP:0); });
+      var t=top+(SUB[k]-s)/2;
+      n.ch.forEach(function(c){ place(c,t); t+=SUB[c]+GAP; });
+      var first=Y[n.ch[0]], last=Y[n.ch[n.ch.length-1]];
+      Y[k]=Math.min(Math.max((first+last)/2, top), top+SUB[k]-H[k]);
+    }
+    var offset=H.prep+48; place("B",offset); Y.prep=0;
+    var total=offset+SUB.B;
+    var html='<svg id="wires"></svg>';
+    ORDER.forEach(function(k){ var x=k==="prep"?0:depth(k)*colW; html+=nodeHtml(k,G,'left:'+(x+8)+'px;top:'+(Y[k]+6)+'px;width:'+bw+'px'); });
+    host.innerHTML=html; host.style.height=(total+10)+"px";
+    LAY=true; drawWires();
+  }
+  function drawWires(){
+    var host=$("tree"), svg=$("wires"); if(!svg||!LAY) return;
+    try{
+      var hr=host.getBoundingClientRect();
+      function a(k){ var el=host.querySelector('[data-anchor="'+k+'"]'); if(!el) return null; var r=el.getBoundingClientRect(); return {x:r.left-hr.left+r.width/2, y:r.top-hr.top+r.height/2}; }
+      var s="", pp=a("prep"), pb=a("B");
+      if(pp&&pb) s+='<path d="M'+pp.x+' '+(pp.y+12)+' V'+(pb.y-12)+'" style="stroke:var(--c-prep);stroke-width:2px;stroke-dasharray:5 5;fill:none;opacity:.7"/>';
+      ORDER.forEach(function(k){
+        var n=NODES[k]; if(k==="prep"||!n.ch.length) return;
+        var p=a(k); if(!p) return;
+        var nh=host.querySelector('[data-open-node="'+k+'"]'), nb=host.querySelector('[data-node="'+k+'"]');
+        var x0=nh.lastElementChild.getBoundingClientRect().right-hr.left+8, x1=nb.getBoundingClientRect().right-hr.left+4;
+        if(x1<x0) x1=x0;
+        s+='<path d="M'+x0+' '+p.y+' H'+x1+'" style="stroke:var(--c-'+n.c+');stroke-width:2px;fill:none;opacity:.35"/>';
+        n.ch.forEach(function(c){
+          var q=a(c); if(!q) return;
+          var ex=q.x-5, dx=(ex-x1)*.55, empty=host.querySelector('[data-node="'+c+'"]').classList.contains("empty");
+          s+='<path d="M'+x1+' '+p.y+' C'+(x1+dx)+' '+p.y+' '+(ex-dx)+' '+q.y+' '+ex+' '+q.y+'" style="stroke:var(--c-'+NODES[c].c+');stroke-width:'+(empty?'1.5':'2.25')+'px;fill:none;opacity:'+(empty?'.4':'1')+'"/>';
+        });
+      });
+      svg.innerHTML=s;
+    }catch(e){}
+  }
+  function renderOutline(host,G){
+    host.classList.add("outline"); host.style.height=""; LAY=null;
+    function rec(k){ var n=NODES[k], h='<div class="nbw'+(k==="B"||k==="prep"?' root':'')+'">'+nodeHtml(k,G,""); if(k!=="prep") n.ch.forEach(function(c){ h+=rec(c); }); return h+'</div>'; }
+    host.innerHTML=rec("prep")+rec("B");
+  }
+
+  /* ---------- Listen unter dem Baum ---------- */
+  function rowHtml(r){
+    var p=pfad(r), i=info(r), d=dateOf(r,p)||dateOf(r,"B");
+    var sub = i.need ? '<small class="late">'+esc(i.need.label)+' fehlt</small>' : '<small class="'+(i.lvl||"")+'">'+(i.badge?esc(i.badge)+' · ':'')+esc(i.txt)+'</small>';
+    return '<li class="row c-'+NODES[p].c+'" data-open-job="'+esc(r.id)+'" tabindex="0"><span class="dot"></span><span class="co"><b>'+esc(r.unternehmen||"Ohne Namen")+'</b><span>'+esc(role(r)||"Rolle fehlt")+artHtml(r)+'</span></span><span class="o">'+esc(r.ort||"")+'</span><span class="st">'+esc(chainLabel(p))+sub+'</span><span class="d">'+esc(fmt(d))+'</span></li>';
+  }
+  function on(o){ return Object.keys(o).filter(function(k){ return o[k]; }); }
+  function filtered(list){
+    var fs=on(ui.fSt), fa=on(ui.fArt), fo=on(ui.fOrt);
+    return list.filter(function(r){ return (!fs.length||fs.indexOf(cOf(r))>=0) && (!fa.length||fa.indexOf(r.art||"–")>=0) && (!fo.length||fo.indexOf(r.ort||"–")>=0); });
+  }
+  function sortList(list){ return list.sort(function(a,b){ if(ui.sort==="alpha") return (a.unternehmen||"").localeCompare(b.unternehmen||"","de"); var x=rank(a), y=rank(b); if(x!==y) return y-x; return prioSort(a,b); }); }
+  function renderAllList(){
+    var A=all(), arts={}, orte={};
+    A.forEach(function(r){ arts[r.art||"–"]=1; orte[r.ort||"–"]=1; });
+    var L=sortList(filtered(A));
+    var h='<div class="dh"><p class="crumb">Alle Bewerbungen<span class="cnt">'+L.length+(L.length!==A.length?' von '+A.length:'')+'</span></p>'+(on(ui.fSt).length||on(ui.fArt).length||on(ui.fOrt).length?'<button type="button" class="linkbtn" data-act="clearF">Filter zurücksetzen</button>':'')+'</div>';
+    h+='<div class="ctrl">';
+    h+='<div class="r"><span class="lab">Sortierung</span><span class="seg"><button type="button" data-act="sort" data-v="progress" aria-pressed="'+(ui.sort==="progress")+'">Fortschritt</button><button type="button" data-act="sort" data-v="alpha" aria-pressed="'+(ui.sort==="alpha")+'">A–Z</button></span></div>';
+    h+='<div class="r"><span class="lab">Stufe</span>'+STUFEN.map(function(s){ return '<button type="button" class="pill c-'+s[0]+'" data-act="fst" data-v="'+s[0]+'" aria-pressed="'+!!ui.fSt[s[0]]+'"><span class="dot"></span>'+esc(s[1])+'</button>'; }).join("")+'</div>';
+    h+='<div class="r"><span class="lab">Art</span>'+ARTEN.map(function(a){ return a[0]; }).concat(arts["–"]?["–"]:[]).map(function(k){ return '<button type="button" class="pill" data-act="fart" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fArt[k]+'">'+esc(k==="–"?"ohne Angabe":k)+'</button>'; }).join("")+'</div>';
+    var ol=Object.keys(orte).sort(function(a,b){ return a==="–"?1:b==="–"?-1:a.localeCompare(b,"de"); });
+    h+='<div class="r"><span class="lab">Ort</span>'+ol.map(function(k){ return '<button type="button" class="pill" data-act="fort" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fOrt[k]+'">'+esc(k==="–"?"ohne Ort":k)+'</button>'; }).join("")+'</div>';
+    h+='</div>';
+    h+= L.length ? '<ul class="list">'+L.map(rowHtml).join("")+'</ul>' : '<p class="empty-msg">Keine Bewerbung passt zu diesem Filter.</p>';
+    return h;
+  }
+  function renderOffers(){
+    var Z=all().filter(function(r){ return cOf(r)==="z"; }).sort(prioSort);
+    var h='<div class="dh"><p class="crumb"><span class="c-z" style="display:inline-flex;align-items:center;gap:6px"><span class="dot"></span>Angebote</span><span class="cnt">'+Z.length+'</span></p><button type="button" class="xbtn" data-act="closeDetail" aria-label="Schließen">✕</button></div>';
+    if(!Z.length) return h+'<p class="empty-msg">Noch keine Zusage. Sobald eine Bewerbung auf „Zusage“ steht, erscheint sie hier mit ihrer Antwortfrist.</p>';
+    h+='<ul class="list">'+Z.map(function(r){
+      var i=info(r), zd=dateOf(r,pfad(r)), ent=r.entscheidung||"offen";
+      var fr = r.frist ? fmt(r.frist) : '<span style="color:var(--late)">Frist fehlt</span>';
+      return '<li class="row offer c-z" data-open-job="'+esc(r.id)+'" tabindex="0"><span class="dot"></span><span class="co"><b>'+esc(r.unternehmen||"Ohne Namen")+'</b><span>'+esc(role(r)||"Rolle fehlt")+artHtml(r)+'</span></span><span class="o zd">'+(zd?'Zusage '+esc(fmtS(zd)):'')+'</span><span class="st">Antwort bis '+(r.frist?esc(fmt(r.frist)):'')+(r.frist?'':fr)+'<small class="'+(i.lvl||"")+'">'+(i.badge?esc(i.badge)+' · ':'')+esc(i.need?"Antwortfrist eintragen":i.txt)+'</small></span><span class="o">'+(ent==="angenommen"?'<b style="color:var(--c-z)">angenommen</b>':ent==="abgelehnt"?'abgelehnt':'Entscheidung offen')+'</span></li>';
+    }).join("")+'</ul>';
+    return h;
+  }
+  function crumbHtml(k){ return chain(k).map(function(c,i){ return (i?'<span class="sep">›</span>':'')+'<span class="c-'+NODES[c].c+'" style="display:inline-flex;align-items:center;gap:6px"><span class="dot"></span>'+esc(NODES[c].l)+'</span>'; }).join(""); }
+  function renderNodeList(){
+    var k=ui.node, L=all().filter(function(r){ return pfad(r)===k; }).sort(prioSort);
+    var h='<div class="dh"><p class="crumb">'+crumbHtml(k)+'<span class="cnt">'+L.length+'</span></p><button type="button" class="xbtn" data-act="closeDetail" aria-label="Schließen">✕</button></div>';
+    h+= L.length ? '<ul class="list">'+L.map(rowHtml).join("")+'</ul>' : '<p class="empty-msg">An diesem Punkt steht gerade keine Bewerbung. Ziehe eine Bewerbung im Baum hierher.</p>';
+    return h;
+  }
+
+  /* ---------- Detail einer Bewerbung ---------- */
+  function inp(r,k,type,ph){ return '<input class="bare" data-k="'+k+'"'+(type?' type="'+type+'"':'')+' value="'+esc(r[k]||"")+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+(canWrite?'':' disabled')+'>'; }
+  function dateLabel(k){ var c=NODES[k].c; return c==="bew"?"beworben am":TERMIN[c]?"Termin am":c==="z"?"Zusage erhalten am":"Absage erhalten am"; }
+  function renderJob(){
+    var r=view(ui.job); if(!r){ ui.mode="none"; ui.job=null; return ""; }
+    var p=pfad(r), n=NODES[p], ro=canWrite?'':' disabled', t=today();
+    var backLab = ui.from==="node"?NODES[ui.node].l:ui.from==="all"?"Alle Bewerbungen":ui.from==="offers"?"Angebote":"Schließen";
+    var h='<div class="job">';
+    h+='<div class="dh"><button type="button" class="back" data-act="backFromJob">‹ '+esc(backLab)+'</button><span class="savestate" id="saveState">'+(pending[r.id]||inflight[r.id]?'Speichert …':'Gespeichert')+'</span></div>';
+    h+='<div><input class="bare t1" data-k="unternehmen" value="'+esc(r.unternehmen||"")+'" placeholder="Unternehmen"'+ro+'><input class="bare t2" data-k="rolle" value="'+esc(r.rolle||"")+'" placeholder="Rolle, z. B. Junior Controller"'+ro+'></div>';
+    h+='<div><p class="sl">Anstellungsart</p><span class="seg">'+ARTEN.map(function(a){ return '<button type="button" data-act="art" data-v="'+a[0]+'" aria-pressed="'+(r.art===a[0])+'" title="'+a[1]+'"'+ro+'>'+a[0]+'</button>'; }).join("")+'</span></div>';
+    h+='<div><p class="sl">Stand</p><div class="path">'+chain(p).map(function(k,i){ return (i?'<span class="arrow">›</span>':'')+'<span class="step c-'+NODES[k].c+'"><span class="dot"></span>'+esc(NODES[k].l)+'</span>'; }).join("")+'</div></div>';
+    if(canWrite){
+      h+='<div><p class="sl">'+(n.ch.length?'Weiter zu':'Pfad beendet')+'</p><div class="nexts">';
+      n.ch.forEach(function(c){ h+='<button type="button" class="nx c-'+NODES[c].c+'" data-act="go" data-v="'+c+'"><span class="dot"></span>'+esc(NODES[c].l)+'</button>'; });
+      var par=parentOf(p); if(par) h+='<button type="button" class="nx backstep" data-act="go" data-v="'+par+'">‹ Schritt zurück</button>';
+      h+='</div></div>';
+    }
+    if(p!=="prep"){
+      h+='<div><p class="sl">Termine und Daten</p><div class="dates">';
+      chain(p).forEach(function(k){
+        var c=NODES[k].c, d=dateOf(r,k), cur=k===p, note="", cls="";
+        if(cur && d && TERMIN[c]){ var N=days(t,d); note = N>=0 ? rel(N) : "war vor "+tage(-N); cls = N>=0&&N<=3?"soon":N<0?"late":""; }
+        if(cur && !d) { note = TERMIN[c] ? "Termin noch eintragen" : "Datum fehlt"; cls="late"; }
+        if(c==="bew" && d && cur){ note="wartet seit "+tage(Math.max(days(d,t),0)); }
+        h+='<div class="drow c-'+c+(cur?' cur':'')+'"><span class="dot"></span><span class="dl">'+esc(NODES[k].l)+'<small>'+esc(dateLabel(k))+'</small></span><input class="bare" type="date" data-date="'+k+'" value="'+esc(d)+'"'+ro+'><span class="info '+cls+'">'+esc(note)+'</span></div>';
+      });
+      if(n.c==="z"){
+        var fi=info(r);
+        h+='<div class="drow c-z cur"><span class="dot"></span><span class="dl">Antwort bis<small>Frist für deine Rückmeldung</small></span><input class="bare" type="date" data-k="frist" value="'+esc(r.frist||"")+'"'+ro+'><span class="info '+(fi.lvl||"")+'">'+esc(fi.need?"Frist noch eintragen":(fi.badge?fi.badge:fi.txt))+'</span></div>';
+        h+='<div class="drow c-z"><span class="dot" style="visibility:hidden"></span><span class="dl">Deine Entscheidung</span><span class="seg" style="grid-column:3/-1;justify-self:start">'+[["","offen"],["angenommen","angenommen"],["abgelehnt","abgelehnt"]].map(function(o){ return '<button type="button" data-act="entsch" data-v="'+o[0]+'" aria-pressed="'+((r.entscheidung||"")===o[0])+'"'+ro+'>'+o[1]+'</button>'; }).join("")+'</span></div>';
+      }
+      h+='</div></div>';
+    }
+    h+='<div class="fields">';
+    h+='<label class="f wide"><span>Stelle (voller Titel)</span>'+inp(r,"stelle")+'</label>';
+    h+='<label class="f"><span>Ort</span>'+inp(r,"ort")+'</label>';
+    h+='<label class="f"><span>Bewerbungsweg</span>'+inp(r,"weg","","Portal, Personalvermittler …")+'</label>';
+    h+='<label class="f"><span>Gehalt angegeben</span>'+inp(r,"gehalt","","z. B. Betrag in EUR")+'</label>';
+    h+='<label class="f"><span>Eintritt angegeben</span>'+inp(r,"eintritt","date")+'</label>';
+    h+='<label class="f wide"><span>Ansprechpartner</span>'+inp(r,"ansprechpartner","","[Name, Kontakt]")+'</label>';
+    h+='<label class="f"><span>Aufgabe</span>'+inp(r,"schritt","","z. B. nachfassen")+'</label>';
+    h+='<label class="f"><span>Aufgabe bis</span>'+inp(r,"schrittDatum","date")+'</label>';
+    h+='<label class="f wide" style="align-items:start;padding-top:8px"><span>Notizen</span><textarea class="bare" data-k="notizen" placeholder="Notizen"'+ro+'>'+esc(r.notizen||"")+'</textarea></label>';
+    h+='</div>';
+    if(canWrite) h+='<div class="foot">'+(ui.confirmDel?'<button type="button" class="btn del solid" data-act="delyes">Endgültig löschen</button><button type="button" class="btn" data-act="delno">Abbrechen</button>':'<button type="button" class="btn del" data-act="del">Löschen</button>')+'</div>';
+    return h+'</div>';
+  }
+  function renderDetail(force){
+    var d=$("detail");
+    if(!force && ui.mode==="job" && d.contains(document.activeElement) && document.activeElement.matches("input,textarea")) return;
+    $("eyeBtn").setAttribute("aria-pressed", String(ui.mode==="all"));
+    $("offerBtn").setAttribute("aria-pressed", String(ui.mode==="offers"));
+    if(!loaded){ d.innerHTML=""; return; }
+    d.innerHTML = ui.mode==="all"?renderAllList():ui.mode==="offers"?renderOffers():ui.mode==="node"?renderNodeList():ui.mode==="job"?renderJob():"";
+  }
+  function show(mode, extra){
+    flushAll(); ui.confirmDel=false;
+    if(mode==="job"){ if(ui.mode!=="job") ui.from=ui.mode; ui.job=extra; }
+    else if(mode==="node"){ ui.node=extra; ui.job=null; }
+    else ui.job=null;
+    ui.mode=mode; renderTree(); renderDetail(true);
+    if(mode!=="none"){ var d=$("detail"), r=d.getBoundingClientRect(); if(r.top>window.innerHeight-140 && d.scrollIntoView) d.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); }
+  }
+  function goBack(){ var f=ui.from; if(f==="node") show("node",ui.node); else if(f==="all"||f==="offers") show(f); else show("none"); }
+
+  /* ---------- Eingaben ---------- */
+  document.addEventListener("input", function(ev){
+    var t=ev.target; if(ui.mode!=="job" || !$("detail").contains(t)) return;
+    var id=ui.job, r=view(id); if(!r) return;
+    if(t.hasAttribute("data-k")){ var o={}; o[t.getAttribute("data-k")]=t.value; queue(id,o, t.type==="date"); }
+    else if(t.hasAttribute("data-date")){ queue(id,{daten:withDate(r,t.getAttribute("data-date"),t.value)}, true); }
+    clearTimeout(window._rt); window._rt=setTimeout(function(){ renderTree(); renderStats(); renderAgenda(); },250);
+  });
+  document.addEventListener("change", function(ev){
+    var t=ev.target; if(!t.hasAttribute || !t.hasAttribute("data-tfield")) return;
+    var id=t.getAttribute("data-job"), k=t.getAttribute("data-tfield"), r=view(id); if(!r||!t.value) return;
+    if(k==="frist") queue(id,{frist:t.value},true); else queue(id,{daten:withDate(r,k,t.value)},true);
+    t.blur(); toast("Datum gespeichert: "+(r.unternehmen||"")+" "+fmt(t.value));
+    setTimeout(function(){ renderAll(); },0);
+  });
+  document.addEventListener("focusout", function(ev){
+    if(ui.mode==="job" && $("detail").contains(ev.target)) flush(ui.job);
+    if($("tree").contains(ev.target) && treeDirty) setTimeout(function(){ if(!treeBusy()) renderTree(); },0);
+  });
+
+  function addNew(){
+    if(!col||!canWrite) return;
+    var ref=col.doc(), now=new Date().toISOString();
+    var doc={unternehmen:"",rolle:"",art:"",stelle:"",ort:"",weg:"",gehalt:"",eintritt:"",ansprechpartner:"",schritt:"",schrittDatum:"",notizen:"",pfad:"prep",daten:[],frist:"",entscheidung:"",erstellt:now,geaendert:now};
+    withRetry(function(){ return ref.set(doc); }).then(function(){ undoStack.push({id:ref.id, created:true}); ui.mode="none"; show("job", ref.id); setTimeout(function(){ var f=document.querySelector('#detail [data-k="unternehmen"]'); if(f) f.focus(); },60); }).catch(function(e){ toast(errMsg(e)); });
+  }
+  function delJob(){
+    var id=ui.job, r=view(id); if(!r) return;
+    var full=clone(r); delete full.id; clearTimeout(timers[id]); delete pending[id];
+    withRetry(function(){ return col.doc(id).delete(); })
+      .then(function(){ undoStack.push({id:id, deleted:full}); toast("Gelöscht: "+(r.unternehmen||"Ohne Namen"), true); goBack(); })
+      .catch(function(e){ toast(errMsg(e)); });
+  }
+
+  /* ---------- Ziehen ---------- */
+  var drag=null;
+  function startDrag(d){
+    d.active=true; d.el.classList.add("lifted");
+    var g=document.createElement("div"); g.className="ghostchip"; g.textContent=d.el.querySelector(".en").textContent; document.body.appendChild(g); d.ghost=g;
+    document.body.classList.add("dragging"); moveGhost(d.x,d.y);
+  }
+  function moveGhost(x,y){
+    if(!drag||!drag.ghost) return;
+    drag.ghost.style.left=x+"px"; drag.ghost.style.top=y+"px";
+    var el=document.elementFromPoint(x,y), t=el&&el.closest("[data-node]");
+    if(drag.over&&drag.over!==t) drag.over.classList.remove("drop-on");
+    if(t) t.classList.add("drop-on"); drag.over=t;
+  }
+  function endDrag(commit){
+    var d=drag; drag=null; if(!d) return;
+    clearTimeout(d.timer); if(d.ghost) d.ghost.remove(); if(d.over) d.over.classList.remove("drop-on");
+    d.el.classList.remove("lifted"); document.body.classList.remove("dragging");
+    if(d.active && commit && d.over) moveJob(d.id, d.over.getAttribute("data-node"));
+    else if(!d.active && commit) show("job", d.id);
+    else if(treeDirty) renderTree();
+  }
+  document.addEventListener("pointerdown", function(ev){
+    if(!ev.target.closest) return;
+    var el=ev.target.closest(".ent"); if(!el||ev.button>0) return;
+    if(ev.target.closest("input,label.need,button")) return;
+    drag={id:el.getAttribute("data-job"), el:el, sx:ev.clientX, sy:ev.clientY, x:ev.clientX, y:ev.clientY, active:false, touch:ev.pointerType!=="mouse"};
+    if(drag.touch && canWrite){ drag.timer=setTimeout(function(){ if(drag&&!drag.active){ startDrag(drag); try{ navigator.vibrate&&navigator.vibrate(10); }catch(e){} } },320); }
+  });
+  document.addEventListener("pointermove", function(ev){
+    if(!drag) return; drag.x=ev.clientX; drag.y=ev.clientY;
+    var dist=Math.abs(ev.clientX-drag.sx)+Math.abs(ev.clientY-drag.sy);
+    if(!drag.active){ if(drag.touch){ if(dist>10){ clearTimeout(drag.timer); drag=null; } return; } if(dist>5&&canWrite) startDrag(drag); else return; }
+    ev.preventDefault(); moveGhost(ev.clientX,ev.clientY);
+  });
+  document.addEventListener("pointerup", function(){ if(drag) endDrag(true); });
+  document.addEventListener("pointercancel", function(){ if(drag) endDrag(false); });
+  document.addEventListener("touchmove", function(ev){ if(drag&&drag.active) ev.preventDefault(); }, {passive:false});
+
+  /* ---------- Klicks ---------- */
+  document.addEventListener("click", function(ev){
+    if(ev.target.closest(".ent")) return;
+    var nh=ev.target.closest("[data-open-node]");
+    if(nh){ var k=nh.getAttribute("data-open-node"); if(ui.mode==="node"&&ui.node===k) show("none"); else show("node",k); return; }
+    var oj=ev.target.closest("[data-open-job]"); if(oj){ show("job", oj.getAttribute("data-open-job")); return; }
+    var t=ev.target.closest("[data-act]"); if(!t||t.disabled) return;
+    var a=t.getAttribute("data-act"), v=t.getAttribute("data-v");
+    if(a==="undo") undo();
+    else if(a==="more"){ var key=t.getAttribute("data-key"); expanded[key]=!expanded[key]; renderTree(); }
+    else if(a==="nextAll"){ nextAll=!nextAll; renderAgenda(); }
+    else if(a==="closeDetail") show("none");
+    else if(a==="backFromJob") goBack();
+    else if(a==="sort"){ ui.sort=v; try{ localStorage.setItem("bt-ui",JSON.stringify({sort:v})); }catch(e){} renderDetail(true); }
+    else if(a==="fst"){ ui.fSt[v]=!ui.fSt[v]; renderDetail(true); }
+    else if(a==="fart"){ ui.fArt[v]=!ui.fArt[v]; renderDetail(true); }
+    else if(a==="fort"){ ui.fOrt[v]=!ui.fOrt[v]; renderDetail(true); }
+    else if(a==="clearF"){ ui.fSt={}; ui.fArt={}; ui.fOrt={}; renderDetail(true); }
+    else if(a==="art"){ var r=view(ui.job); queue(ui.job,{art:r.art===v?"":v},true); renderDetail(true); renderTree(); }
+    else if(a==="entsch"){ queue(ui.job,{entscheidung:v},true); renderAll(); renderDetail(true); }
+    else if(a==="go") moveJob(ui.job, v);
+    else if(a==="del"){ ui.confirmDel=true; renderDetail(true); }
+    else if(a==="delno"){ ui.confirmDel=false; renderDetail(true); }
+    else if(a==="delyes") delJob();
+  });
+  document.addEventListener("keydown", function(ev){
+    if(ev.key==="Escape"){ if(drag) endDrag(false); else if(ui.mode!=="none") show("none"); }
+    if(ev.key==="Enter"||ev.key===" "){
+      var t=ev.target; if(!t.matches) return;
+      if(t.matches(".ent")){ ev.preventDefault(); show("job", t.getAttribute("data-job")); }
+      else if(t.matches("[data-open-job]")){ ev.preventDefault(); show("job", t.getAttribute("data-open-job")); }
+      else if(t.matches("[data-open-node]")){ ev.preventDefault(); t.click(); }
+    }
+    if((ev.metaKey||ev.ctrlKey)&&ev.key==="z"&&!(ev.target.matches&&ev.target.matches("input,textarea"))){ ev.preventDefault(); undo(); }
+  });
+  $("eyeBtn").addEventListener("click", function(){ show(ui.mode==="all"?"none":"all"); });
+  $("offerBtn").addEventListener("click", function(){ show(ui.mode==="offers"?"none":"offers"); });
+  $("undoBtn").addEventListener("click", undo);
+  $("addBtn").addEventListener("click", addNew);
+  var lastW=0;
+  function onResize(){ var w=$("tree").clientWidth; if(Math.abs(w-lastW)>2){ lastW=w; renderTree(); } else drawWires(); }
+  if(window.ResizeObserver) new ResizeObserver(function(){ requestAnimationFrame(onResize); }).observe($("tree"));
+  else window.addEventListener("resize", function(){ requestAnimationFrame(onResize); });
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ drawWires(); });
+
+  /* Nicht neu zeichnen, solange eine Maustaste oder ein Finger unten ist, sonst geht der Klick verloren */
+  var ptrDown=false, renderPending=false;
+  document.addEventListener("pointerdown", function(){ ptrDown=true; }, true);
+  function ptrRelease(){ ptrDown=false; if(renderPending){ renderPending=false; setTimeout(renderAll,0); } }
+  document.addEventListener("pointerup", function(){ setTimeout(ptrRelease,0); }, true);
+  document.addEventListener("pointercancel", function(){ setTimeout(ptrRelease,0); }, true);
+  function renderAll(){ if(ptrDown){ renderPending=true; return; } renderStats(); renderAgenda(); renderTree(); renderDetail(false); }
+
+  /* ---------- Speicher: GitHub (data.json) mit localStorage als Zwischenspeicher ---------- */
+  /* Die Seite liegt öffentlich, die Daten im privaten Repository bw-daten */
+  var OWNER="Manav25-create-create", REPO="bw-daten", PATH="data.json", BRANCH="main";
+  var API="https://api.github.com/repos/"+OWNER+"/"+REPO+"/contents/"+PATH;
+  var KEY="bw-tracker-v1", TKEY="bw-tracker-token";
+  var STORE={}, TOMB={}, SHA=null, DIRTY=false, CHANGE=0, storageOk=true;
+  var sync={state:"load", msg:"", timer:null, inflight:false, again:false, lastPull:0, retry:null, savedAt:""};
+  var FIELDS=["unternehmen","rolle","art","stelle","ort","weg","gehalt","eintritt","ansprechpartner","schritt","schrittDatum","notizen","pfad","frist","entscheidung","erstellt","geaendert"];
+  function newId(){ return "b"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function nowIso(){ return new Date().toISOString(); }
+  function clean(r){
+    if(!r||typeof r!=="object") return null;
+    var o={id: (typeof r.id==="string" && /^[A-Za-z0-9_.:-]{1,80}$/.test(r.id)) ? r.id : newId()};
+    FIELDS.forEach(function(k){ o[k] = r[k]==null ? "" : String(r[k]); });
+    if(!NODES[o.pfad]) o.pfad = (Array.isArray(r.schritte)&&r.schritte.length) ? "B" : "prep";
+    o.daten = Array.isArray(r.daten) ? r.daten.filter(function(x){ return x && NODES[x.k] && isIso(x.d); }).map(function(x){ return {k:x.k, d:x.d}; }) : [];
+    if(["","angenommen","abgelehnt"].indexOf(o.entscheidung)<0) o.entscheidung="";
+    if(!isIso(o.frist)) o.frist=""; if(!isIso(o.eintritt)) o.eintritt=""; if(!isIso(o.schrittDatum)) o.schrittDatum="";
+    return o;
+  }
+  function parseDoc(o){
+    var list=Array.isArray(o)?o:(o&&Array.isArray(o.bewerbungen)?o.bewerbungen:[]), s={}, t={};
+    list.forEach(function(r){ var c=clean(r); if(c) s[c.id]=c; });
+    if(o && o.geloescht && typeof o.geloescht==="object") Object.keys(o.geloescht).forEach(function(id){ var v=o.geloescht[id]; if(typeof v==="string" && /^\d{4}-\d{2}-\d{2}T/.test(v)) t[id]=v; });
+    return {store:s, tomb:t};
+  }
+  function buildDoc(){
+    var cut=new Date(Date.now()-180*864e5).toISOString(), g={};
+    Object.keys(TOMB).sort().forEach(function(id){ if(TOMB[id]>=cut && !STORE[id]) g[id]=TOMB[id]; });
+    return {app:"bw-tracker", version:2, aktualisiert:nowIso(), bewerbungen:Object.keys(STORE).sort().map(function(id){ return STORE[id]; }), geloescht:g};
+  }
+  function canon(store,tomb){ return JSON.stringify([Object.keys(store).sort().map(function(id){ return store[id]; }), Object.keys(tomb).filter(function(id){ return !store[id]; }).sort().map(function(id){ return [id,tomb[id]]; })]); }
+
+  /* Zwischenspeicher */
+  function readCache(){
+    STORE={}; TOMB={}; SHA=null; DIRTY=false;
+    if(!token()) return;
+    try{
+      var raw=localStorage.getItem(KEY); storageOk=true; if(!raw) return;
+      var o=JSON.parse(raw), p=parseDoc(o), same=o&&o.repo===OWNER+"/"+REPO;
+      STORE=p.store; TOMB=p.tomb; SHA=(same&&typeof o.sha==="string")?o.sha:null; DIRTY=!!(o&&o.dirty);
+    }catch(e){ storageOk=false; }
+  }
+  function clearCache(){ try{ localStorage.removeItem(KEY); }catch(e){} STORE={}; TOMB={}; SHA=null; DIRTY=false; CHANGE++; }
+  function writeCache(){
+    try{
+      if(!token()) return null;
+      localStorage.setItem(KEY, JSON.stringify({version:2, repo:OWNER+"/"+REPO, sha:SHA, dirty:DIRTY, bewerbungen:Object.keys(STORE).map(function(id){ return STORE[id]; }), geloescht:TOMB}));
+      return null;
+    }catch(e){ return {code:(e&&(e.name==="QuotaExceededError"||e.code===22))?"quota_exceeded":"no_storage"}; }
+  }
+  function token(){ try{ return localStorage.getItem(TKEY)||""; }catch(e){ return ""; } }
+
+  /* Zusammenführen pro Eintrag nach Änderungszeit, Löschungen über Zeitstempel */
+  function merge(aS,aT,bS,bT){
+    var s={}, t={}, ids={};
+    Object.keys(aS).concat(Object.keys(bS),Object.keys(aT),Object.keys(bT)).forEach(function(id){ ids[id]=1; });
+    Object.keys(ids).forEach(function(id){
+      var a=aS[id], b=bS[id], pick=a&&b ? ((b.geaendert||"")>(a.geaendert||"")?b:a) : (a||b);
+      var ta=aT[id]||"", tb=bT[id]||"", tomb=ta>tb?ta:tb;
+      if(pick && (!tomb || (pick.geaendert||"")>tomb)) s[id]=clone(pick);
+      else if(tomb) t[id]=tomb;
+    });
+    return {store:s, tomb:t};
+  }
+
+  /* Datenbasis für die Oberfläche */
+  function syncRows(){ rows=Object.keys(STORE).map(function(id){ return clone(STORE[id]); }); loaded=true; }
+  function emit(){ syncRows(); renderAll(); }
+  function commit(){ DIRTY=true; CHANGE++; var err=writeCache(); syncRows(); setTimeout(renderAll,0); scheduleSync(); return err?Promise.reject(err):Promise.resolve(); }
+  function replaceStore(obj){
+    var now=nowIso(), next=clone(obj);
+    Object.keys(STORE).forEach(function(id){ if(!next[id]) TOMB[id]=now; });
+    Object.keys(next).forEach(function(id){ next[id].geaendert=now; delete TOMB[id]; });
+    STORE=next; commit().catch(function(e){ toast(errMsg(e)); });
+  }
+  col={doc:function(id){ id=id||newId(); return {id:id,
+    update:function(p){ if(!STORE[id]) return Promise.reject({code:"invalid_argument"}); Object.keys(p).forEach(function(k){ STORE[id][k]=clone(p[k]); }); if(!p.geaendert) STORE[id].geaendert=nowIso(); return commit(); },
+    set:function(p){ var o=clone(p); o.id=id; o.geaendert=nowIso(); STORE[id]=o; delete TOMB[id]; return commit(); },
+    delete:function(){ delete STORE[id]; TOMB[id]=nowIso(); return commit(); } }; }};
+
+  /* GitHub-API */
+  function b64enc(str){ var bytes=new TextEncoder().encode(str), bin=""; for(var i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000)); return btoa(bin); }
+  function b64dec(b64){ var bin=atob(String(b64).replace(/\s/g,"")), bytes=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return new TextDecoder().decode(bytes); }
+  function hdrs(json){ var h={"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}, t=token(); if(t) h.Authorization="Bearer "+t; if(json) h["Content-Type"]="application/json"; return h; }
+  function apiError(res, body){
+    var m=(body&&body.message)||"", s=res.status;
+    if(s===401) return {kind:"auth", msg:"Token ungültig oder abgelaufen"};
+    if(s===403 && res.headers.get("x-ratelimit-remaining")==="0") return {kind:"limit", msg:"GitHub-Abruflimit erreicht, später erneut"};
+    if(s===403) return {kind:"auth", msg:"Token ohne Schreibrecht für data.json"};
+    if(s===404) return {kind:"auth", msg:"Kein Zugriff auf bw-daten oder data.json fehlt"};
+    if(s===409 || (s===422 && /sha/i.test(m))) return {kind:"conflict", msg:"Konflikt"};
+    return {kind:"other", msg:"GitHub-Fehler "+s+(m?": "+m:"")};
+  }
+  function pull(){
+    if(!token()) return Promise.reject({kind:"notoken"});
+    return fetch(API+"?ref="+BRANCH+"&_="+Date.now(), {headers:hdrs(false), cache:"no-store"}).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        if(res.status===404) throw {kind:"auth", msg:"Kein Zugriff auf bw-daten oder data.json fehlt"};
+        if(!res.ok) throw apiError(res, body);
+        var o; try{ o=JSON.parse(b64dec(body.content)); }catch(e){ throw {kind:"other", msg:"data.json ist beschädigt"}; }
+        return {sha:body.sha, doc:parseDoc(o)};
+      });
+    }, function(){ throw {kind:"offline"}; });
+  }
+  function put(){
+    var body={message:"Bewerbungen aktualisiert", content:b64enc(JSON.stringify(buildDoc(),null,2)+"\n"), branch:BRANCH};
+    if(SHA) body.sha=SHA;
+    return fetch(API, {method:"PUT", headers:hdrs(true), body:JSON.stringify(body), cache:"no-store"}).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(b){ if(!res.ok) throw apiError(res,b); return b.content.sha; });
+    }, function(){ throw {kind:"offline"}; });
+  }
+
+  /* Ablauf */
+  function setSync(state,msg){ sync.state=state; sync.msg=msg||""; renderSync(); }
+  function scheduleSync(delay){
+    clearTimeout(sync.timer); clearTimeout(sync.retry);
+    if(!DIRTY){ return; }
+    if(!token()){ setSync("notoken"); return; }
+    setSync("busy");
+    sync.timer=setTimeout(pushNow, delay==null?2000:delay);
+  }
+  function pushNow(attempt){
+    attempt=attempt||0;
+    if(!DIRTY) { setSync("ok"); return; }
+    if(!token()){ setSync("notoken"); return; }
+    if(sync.inflight){ sync.again=true; return; }
+    sync.inflight=true; setSync("busy");
+    var start=CHANGE;
+    put().then(function(newSha){
+      SHA=newSha; if(CHANGE===start) DIRTY=false;
+      writeCache(); sync.savedAt=nowIso(); sync.inflight=false;
+      sync.again=false; if(DIRTY) scheduleSync(); else setSync("ok");
+    }).catch(function(e){
+      sync.inflight=false;
+      if(e.kind==="conflict" && attempt<3){
+        pull().then(function(r){
+          var m=merge(STORE,TOMB,r.doc.store,r.doc.tomb);
+          STORE=m.store; TOMB=m.tomb; SHA=r.sha; writeCache(); emit();
+          if(canon(STORE,TOMB)===canon(r.doc.store,r.doc.tomb)){ DIRTY=false; writeCache(); setSync("ok"); }
+          else pushNow(attempt+1);
+          toast("Änderung von einem anderen Gerät zusammengeführt");
+        }).catch(fail);
+      } else fail(e);
+    });
+  }
+  function fail(e){
+    if(e.kind==="notoken"){ setSync("locked"); return; }
+    if(e.kind==="offline"){ setSync("offline"); clearTimeout(sync.retry); sync.retry=setTimeout(function(){ if(DIRTY) pushNow(); else refresh(); },30000); }
+    else setSync("error", e.msg||"Fehler beim Speichern");
+  }
+  function refresh(){
+    if(!token()){ clearTimeout(sync.timer); setSync("locked"); return; }
+    if(sync.inflight) return;
+    sync.lastPull=Date.now();
+    if(sync.state!=="busy") setSync("load");
+    sync.inflight=true;
+    pull().then(function(r){
+      sync.inflight=false;
+      if(DIRTY){
+        var m=merge(STORE,TOMB,r.doc.store,r.doc.tomb);
+        STORE=m.store; TOMB=m.tomb; SHA=r.sha;
+        DIRTY = canon(STORE,TOMB)!==canon(r.doc.store,r.doc.tomb);
+      } else { STORE=r.doc.store; TOMB=r.doc.tomb; SHA=r.sha; }
+      writeCache(); emit();
+      if(DIRTY) scheduleSync(0); else setSync("ok");
+    }).catch(function(e){ sync.inflight=false; fail(e); });
+  }
+
+  /* Statusanzeige und Einstellungen */
+  function renderSync(){
+    var el=$("syncPill"); if(!el) return;
+    var t={load:["busy","Lädt …"], busy:["busy","Speichert …"], ok:["ok","Gespeichert"], offline:["off","Offline · lokal gesichert"], notoken:["warn","Token fehlt"], locked:["warn","Token eintragen"], error:["err",sync.msg||"Fehler"]}[sync.state]||["off",""];
+    el.className="syncpill s-"+t[0]; el.querySelector("span:last-child").textContent=t[1];
+    el.title = sync.state==="ok" && sync.savedAt ? "Zuletzt gespeichert "+new Date(sync.savedAt).toLocaleTimeString("de-DE") : "Synchronisierung mit GitHub";
+    if(!$("settingsBar").hidden) renderSettings();
+    var lk=$("lockNote"); if(lk) lk.hidden=!!token();
+    $("addBtn").disabled=!(loaded&&canWrite&&col&&token());
+  }
+  var settingsOpen=false, tokDelArmed=false;
+  function renderSettings(){
+    var bar=$("settingsBar");
+    if(!settingsOpen){ bar.hidden=true; bar.innerHTML=""; return; }
+    var t=token(), keep=$("tokenInput")?$("tokenInput").value:"";
+    bar.hidden=false;
+    bar.innerHTML='<div class="importbar settings"><p><b>Synchronisierung mit GitHub</b><small>Daten: privates Repository '+esc(OWNER+"/"+REPO)+', Datei '+esc(PATH)+' auf '+esc(BRANCH)+'. Der Token bleibt nur in diesem Browser (localStorage) und wird nie hochgeladen. Ohne Token zeigt die Seite keine Daten. „Token entfernen“ löscht auch die lokale Kopie auf diesem Gerät.</small><small>'+(t?'Token gespeichert, endet auf …'+esc(t.slice(-4)):'Kein Token gespeichert')+' · Status: '+esc($("syncPill").textContent)+'</small></p><span class="grp"><input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off" spellcheck="false" aria-label="Fine-grained Token" value="'+esc(keep)+'"><button type="button" class="btn primary" data-act="tokSave">Token speichern</button>'+(t?(tokDelArmed?'<button type="button" class="btn del solid" data-act="tokDelYes">Ungespeicherte Änderungen verwerfen und entfernen</button>':'<button type="button" class="btn" data-act="tokDel">Token entfernen</button>'):'')+'<button type="button" class="btn" data-act="syncNow">Jetzt abgleichen</button><button type="button" class="btn" data-act="setClose">Schließen</button></span></div>';
+  }
+  document.addEventListener("click", function(ev){
+    var t=ev.target.closest&&ev.target.closest('[data-act^="tok"],[data-act="setClose"],[data-act="syncNow"],#syncPill'); if(!t) return;
+    if(t.id==="syncPill"){ settingsOpen=!settingsOpen; renderSettings(); if(settingsOpen){ var i=$("tokenInput"); if(i&&!token()) i.focus(); } return; }
+    var a=t.getAttribute("data-act");
+    if(a==="setClose"){ settingsOpen=false; renderSettings(); }
+    else if(a==="tokSave"){
+      var v=($("tokenInput").value||"").trim();
+      if(!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(v)){ toast("Das sieht nicht nach einem GitHub-Token aus (beginnt mit github_pat_)."); return; }
+      try{ localStorage.setItem(TKEY,v); }catch(e){ toast("Token konnte nicht gespeichert werden."); return; }
+      $("tokenInput").value=""; toast("Token gespeichert"); readCache(); emit(); refresh(); renderSettings();
+    }
+    else if(a==="tokDel" && DIRTY){ tokDelArmed=true; renderSettings(); }
+    else if(a==="tokDel"||a==="tokDelYes"){
+      tokDelArmed=false; clearTimeout(sync.timer);
+      clearCache(); try{ localStorage.removeItem(TKEY); }catch(e){}
+      undoStack.length=0; show("none"); emit(); setSync("locked"); renderSettings(); toast("Token und lokale Daten auf diesem Gerät entfernt");
+    }
+    else if(a==="syncNow"){ if(DIRTY) pushNow(); else refresh(); }
+  });
+
+  /* ---------- Export und Import ---------- */
+  function exportJson(){
+    flushAll();
+    var data={app:"bw-tracker", version:2, exportiert:nowIso(), bewerbungen:Object.keys(STORE).map(function(id){ return STORE[id]; })};
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="bewerbungen-"+today()+".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+    toast(data.bewerbungen.length+" Bewerbungen exportiert");
+  }
+  var importData=null;
+  function renderImportBar(){
+    var bar=$("importBar");
+    if(!importData){ bar.hidden=true; bar.innerHTML=""; return; }
+    var n=importData.length, m=Object.keys(STORE).length, neu=importData.filter(function(r){ return !STORE[r.id]; }).length;
+    bar.hidden=false;
+    bar.innerHTML='<div class="importbar"><p><b>'+n+' '+(n===1?'Bewerbung':'Bewerbungen')+'</b> in „'+esc(importData.name)+'“<small>Aktuell gespeichert: '+m+'. Zusammenführen ergänzt '+neu+' neue und überschreibt gleiche Einträge. Ersetzen löscht den aktuellen Stand. Beides lässt sich rückgängig machen.</small></p><span class="grp"><button type="button" class="btn" data-act="impCancel">Abbrechen</button><button type="button" class="btn" data-act="impMerge">Zusammenführen</button><button type="button" class="btn primary" data-act="impReplace">Ersetzen</button></span></div>';
+  }
+  function readImport(file){
+    var fr=new FileReader();
+    fr.onload=function(){
+      var list;
+      try{ var o=JSON.parse(fr.result); list=Array.isArray(o)?o:(o&&Array.isArray(o.bewerbungen)?o.bewerbungen:null); }catch(e){ list=null; }
+      if(!list){ toast("Die Datei ist kein gültiger Export des Trackers."); return; }
+      var out=list.map(clean).filter(Boolean);
+      if(!out.length){ toast("In der Datei stehen keine Bewerbungen."); return; }
+      out.name=file.name; importData=out; renderImportBar();
+    };
+    fr.onerror=function(){ toast("Datei konnte nicht gelesen werden."); };
+    fr.readAsText(file);
+  }
+  function applyImport(mode){
+    if(!importData) return;
+    flushAll();
+    undoStack.push({snapshot:clone(STORE)});
+    var next = mode==="replace" ? {} : clone(STORE);
+    importData.forEach(function(r){ next[r.id]=clone(r); });
+    var n=importData.length; importData=null; renderImportBar();
+    show("none"); replaceStore(next);
+    toast(n+" Bewerbungen "+(mode==="replace"?"importiert, alter Stand ersetzt":"zusammengeführt"), true);
+  }
+  $("exportBtn").addEventListener("click", exportJson);
+  $("importBtn").addEventListener("click", function(){ var f=$("importFile"); f.value=""; f.click(); });
+  $("importFile").addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) readImport(f); this.value=""; });
+  document.addEventListener("click", function(ev){
+    var t=ev.target.closest&&ev.target.closest('[data-act^="imp"]'); if(!t) return;
+    var a=t.getAttribute("data-act");
+    if(a==="impCancel"){ importData=null; renderImportBar(); }
+    else if(a==="impMerge") applyImport("merge");
+    else if(a==="impReplace") applyImport("replace");
+  });
+
+  /* Abgleich bei Rückkehr, Netz wieder da, Tabwechsel, Schließen */
+  window.addEventListener("storage", function(ev){ if(ev.key===KEY){ readCache(); emit(); } if(ev.key===TKEY){ readCache(); emit(); refresh(); renderSync(); } });
+  window.addEventListener("online", function(){ if(DIRTY) pushNow(); else refresh(); });
+  window.addEventListener("offline", function(){ setSync("offline"); });
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState==="hidden"){ flushAll(); if(DIRTY && token()){ clearTimeout(sync.timer); pushNow(); } }
+    else if(Date.now()-sync.lastPull>30000) refresh();
+  });
+  window.addEventListener("focus", function(){ if(Date.now()-sync.lastPull>30000) refresh(); });
+  window.addEventListener("beforeunload", function(ev){ if(DIRTY && token()){ ev.preventDefault(); ev.returnValue=""; } });
+
+  /* Start: sofort aus dem Zwischenspeicher, dann von GitHub */
+  readCache(); dbState="ok";
+  if(!storageOk) setStatus("Lokaler Speicher nicht verfügbar. Der Token muss bei jedem Öffnen neu eingetragen werden.", true);
+  emit(); renderSync();
+  refresh();
+})();
+</script>
+</body>
+</html>
