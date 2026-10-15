@@ -920,6 +920,8 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     if(!r||typeof r!=="object") return null;
     var o={id: (typeof r.id==="string" && /^[A-Za-z0-9_.:-]{1,80}$/.test(r.id)) ? r.id : newId()};
     FIELDS.forEach(function(k){ o[k] = r[k]==null ? "" : String(r[k]); });
+    /* Unbekannte Felder (z. B. aus einer neueren Fassung der Seite) unverändert behalten, damit beim Speichern nichts verloren geht */
+    Object.keys(r).forEach(function(k){ if(k in o || k==="daten" || k==="schritte" || !/^[A-Za-z][A-Za-z0-9_]{0,40}$/.test(k)) return; var v=r[k]; if(typeof v==="string"||typeof v==="number"||typeof v==="boolean") o[k]=v; });
     if(!NODES[o.pfad]) o.pfad = (Array.isArray(r.schritte)&&r.schritte.length) ? "B" : "prep";
     o.daten = Array.isArray(r.daten) ? r.daten.filter(function(x){ return x && NODES[x.k] && isIso(x.d); }).map(function(x){ return {k:x.k, d:x.d}; }) : [];
     if(["","angenommen","abgelehnt"].indexOf(o.entscheidung)<0) o.entscheidung="";
