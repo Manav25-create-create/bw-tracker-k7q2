@@ -56,6 +56,11 @@ button{cursor:pointer}
 .agenda .d{font-family:var(--mono);font-size:12px;color:var(--ink2)}
 .agenda .w{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agenda .w span{color:var(--muted)}
+.asm{display:inline-flex;align-items:center;gap:3px;margin-left:5px;vertical-align:-2px;color:var(--ink2);font-size:11px;font-weight:600}
+.asm svg{width:14px;height:14px}
+.asm.asneed{color:#B45309}
+.asm.lead{margin:0 4px 0 0}
+.pill .asm{margin-left:0}
 .tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--hover);color:var(--ink2)}
 .tag.soon{background:var(--c,var(--ink));color:#fff}
 .tag.late{background:#FFEDD5;color:var(--late)}
@@ -304,7 +309,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
 
   var rows=[], loaded=false, col=null, canWrite=true, dbState="pending";
   var pending={}, timers={}, inflight={}, undoStack=[], expanded={}, nextAll=false, treeDirty=false;
-  var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, confirmDel:false, fsort:"rank", fStufe:{}, fTr:{}, fOpen:null, fMore:null};
+  var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, fAs:{}, confirmDel:false, fsort:"rank", fStufe:{}, fTr:{}, fOpen:null, fMore:null};
   try{ var sv=JSON.parse(localStorage.getItem("bt-ui")||"{}"); if(sv.sort) ui.sort=sv.sort; if(sv.fsort==="alpha") ui.fsort="alpha"; }catch(e){}
   function saveUi(){ try{ localStorage.setItem("bt-ui",JSON.stringify({sort:ui.sort, fsort:ui.fsort})); }catch(e){} }
 
@@ -329,7 +334,9 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function dateOf(r,k){ var D=dates(r); for(var i=0;i<D.length;i++) if(D[i].k===k) return D[i].d||""; return ""; }
   function withDate(r,k,v){ var D=dates(r).filter(function(x){ return x.k!==k; }); if(v) D.push({k:k,d:v}); return D; }
   function role(r){ return r.rolle || r.stelle || ""; }
-  function artHtml(r){ return r.art ? '<span class="art">'+esc(r.art)+'</span>' : ''; }
+  function artHtml(r){ return (r.art ? '<span class="art">'+esc(r.art)+'</span>' : '')+asHtml(r); }
+  var ENV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.2 8.5-6.2"/></svg>';
+  function asHtml(r,lead){ if(r.anschreiben!=="ja") return ""; var need=pfad(r)==="prep"; return '<span class="asm'+(need?' asneed':'')+(lead?' lead':'')+'" title="'+(need?'Anschreiben nötig':'Mit Anschreiben beworben')+'" aria-label="'+(need?'Anschreiben nötig':'Mit Anschreiben beworben')+'">'+ENV+'</span>'; }
   function cOf(r){ return NODES[pfad(r)].c; }
 
   /* Zustand einer Bewerbung: Text, Dringlichkeit, fehlendes Feld, Sortierschlüssel */
@@ -337,7 +344,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var p=pfad(r), n=NODES[p], t=today(), d, N;
     if(p==="prep"){
       if(r.schrittDatum){ N=days(t,r.schrittDatum); return {txt:(r.schritt||"Aufgabe")+" bis "+fmtS(r.schrittDatum), lvl:N<0?"late":N<=3?"soon":"muted", g:N<0?2:N<=3?0:3, v:N}; }
-      return {txt:"noch nicht beworben", lvl:"muted", g:5, v:0};
+      return {txt:r.schritt||"noch nicht beworben", lvl:"muted", g:5, v:0};
     }
     if(n.c==="bew"){
       d=dateOf(r,"B"); if(!d) return {need:{k:"B",label:"Beworben am"}, g:1, v:0};
@@ -464,7 +471,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   }
   function entHtml(r){
     var i=info(r);
-    return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,role(r),r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en">'+esc(r.unternehmen||"Ohne Namen")+'</span><span class="er">'+(esc(role(r))||'Rolle fehlt')+artHtml(r)+'</span>'+statusHtml(r)+'</div>';
+    return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,role(r),r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en">'+esc(r.unternehmen||"Ohne Namen")+'</span><span class="er">'+asHtml(r,true)+(esc(role(r))||'Rolle fehlt')+(r.art?'<span class="art">'+esc(r.art)+'</span>':'')+'</span>'+statusHtml(r)+'</div>';
   }
   function nodeHtml(k,G,style){
     var n=NODES[k], list=G[k], c=list.length, show=expanded[k]?list:list.slice(0,MAXS);
@@ -543,20 +550,22 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   }
   function on(o){ return Object.keys(o).filter(function(k){ return o[k]; }); }
   function filtered(list){
-    var fs=on(ui.fSt), fa=on(ui.fArt), fo=on(ui.fOrt);
-    return list.filter(function(r){ return (!fs.length||fs.indexOf(cOf(r))>=0) && (!fa.length||fa.indexOf(r.art||"–")>=0) && (!fo.length||fo.indexOf(r.ort||"–")>=0); });
+    var fs=on(ui.fSt), fa=on(ui.fArt), fo=on(ui.fOrt), fx=on(ui.fAs);
+    return list.filter(function(r){ return (!fs.length||fs.indexOf(cOf(r))>=0) && (!fa.length||fa.indexOf(r.art||"–")>=0) && (!fo.length||fo.indexOf(r.ort||"–")>=0) && (!fx.length||fx.indexOf(r.anschreiben||"–")>=0); });
   }
   function sortList(list){ return list.sort(function(a,b){ if(ui.sort==="alpha") return (a.unternehmen||"").localeCompare(b.unternehmen||"","de"); var x=rank(a), y=rank(b); if(x!==y) return y-x; return prioSort(a,b); }); }
   function renderAllList(){
     var A=all(), arts={}, orte={};
     A.forEach(function(r){ arts[r.art||"–"]=1; orte[r.ort||"–"]=1; });
     var L=sortList(filtered(A));
-    var h='<div class="dh"><p class="crumb">Alle Bewerbungen<span class="cnt">'+L.length+(L.length!==A.length?' von '+A.length:'')+'</span></p>'+(on(ui.fSt).length||on(ui.fArt).length||on(ui.fOrt).length?'<button type="button" class="linkbtn" data-act="clearF">Filter zurücksetzen</button>':'')+'</div>';
+    var h='<div class="dh"><p class="crumb">Alle Bewerbungen<span class="cnt">'+L.length+(L.length!==A.length?' von '+A.length:'')+'</span></p>'+(on(ui.fSt).length||on(ui.fArt).length||on(ui.fOrt).length||on(ui.fAs).length?'<button type="button" class="linkbtn" data-act="clearF">Filter zurücksetzen</button>':'')+'</div>';
     h+='<div class="ctrl">';
     h+='<div class="r"><span class="lab">Sortierung</span><span class="seg"><button type="button" data-act="sort" data-v="progress" aria-pressed="'+(ui.sort==="progress")+'">Fortschritt</button><button type="button" data-act="sort" data-v="alpha" aria-pressed="'+(ui.sort==="alpha")+'">A–Z</button></span></div>';
     h+='<div class="r"><span class="lab">Stufe</span>'+STUFEN.map(function(s){ return '<button type="button" class="pill c-'+s[0]+'" data-act="fst" data-v="'+s[0]+'" aria-pressed="'+!!ui.fSt[s[0]]+'"><span class="dot"></span>'+esc(s[1])+'</button>'; }).join("")+'</div>';
     h+='<div class="r"><span class="lab">Art</span>'+ARTEN.map(function(a){ return a[0]; }).concat(arts["–"]?["–"]:[]).map(function(k){ return '<button type="button" class="pill" data-act="fart" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fArt[k]+'">'+esc(k==="–"?"ohne Angabe":k)+'</button>'; }).join("")+'</div>';
     var ol=Object.keys(orte).sort(function(a,b){ return a==="–"?1:b==="–"?-1:a.localeCompare(b,"de"); });
+    var AS=[["ja","mit Anschreiben"],["nein","ohne"],["–","nicht angegeben"]];
+    h+='<div class="r"><span class="lab">Anschreiben</span>'+AS.map(function(a){ var n=A.filter(function(r){ return (r.anschreiben||"–")===a[0]; }).length; return '<button type="button" class="pill" data-act="fas" data-v="'+a[0]+'" aria-pressed="'+!!ui.fAs[a[0]]+'">'+(a[0]==="ja"?'<span class="asm">'+ENV+'</span>':'')+esc(a[1])+' <span class="nc">'+n+'</span></button>'; }).join("")+'</div>';
     h+='<div class="r"><span class="lab">Ort</span>'+ol.map(function(k){ return '<button type="button" class="pill" data-act="fort" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fOrt[k]+'">'+esc(k==="–"?"ohne Ort":k)+'</button>'; }).join("")+'</div>';
     h+='</div>';
     h+= L.length ? '<ul class="list">'+L.map(rowHtml).join("")+'</ul>' : '<p class="empty-msg">Keine Bewerbung passt zu diesem Filter.</p>';
@@ -653,7 +662,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var u=null; firms.list.forEach(function(f){ if(f.id===id) u=f; }); if(!u||!canCreate()) return;
     var ref=col.doc(), now=new Date().toISOString(), init=kind==="init";
     var doc={unternehmen:u.kurz, rolle:init?"Initiativbewerbung":"", art:init?"Vz":"", stelle:init?"Initiativbewerbung":"", ort:u.stadt||"", weg:"", gehalt:"", eintritt:"", ansprechpartner:"", schritt:"", schrittDatum:"",
-      notizen:"Aus „Mögliche Unternehmen“ (Rang "+u.rang+", Stufe "+u.stufe+")."+(u.karriere?" Karriereseite laut Recherche: "+u.karriere:""), pfad:"prep", daten:[], frist:"", entscheidung:"", firma:u.id, erstellt:now, geaendert:now};
+      notizen:"Aus „Mögliche Unternehmen“ (Rang "+u.rang+", Stufe "+u.stufe+")."+(u.karriere?" Karriereseite laut Recherche: "+u.karriere:""), pfad:"prep", daten:[], frist:"", entscheidung:"", anschreiben:"", firma:u.id, erstellt:now, geaendert:now};
     withRetry(function(){ return ref.set(doc); }).then(function(){
       undoStack.push({id:ref.id, created:true}); ui.fMore=null; ui.mode="firms"; show("job", ref.id);
       toast((init?"Initiativbewerbung":"Stelle")+" angelegt: "+u.kurz+" (In Bearbeitung)");
@@ -701,7 +710,8 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var h='<div class="job">';
     h+='<div class="dh"><button type="button" class="back" data-act="backFromJob">‹ '+esc(backLab)+'</button><span class="savestate" id="saveState">'+(pending[r.id]||inflight[r.id]?'Speichert …':'Gespeichert')+'</span></div>';
     h+='<div><input class="bare t1" data-k="unternehmen" value="'+esc(r.unternehmen||"")+'" placeholder="Unternehmen"'+ro+'><input class="bare t2" data-k="rolle" value="'+esc(r.rolle||"")+'" placeholder="Rolle, z. B. Junior Controller"'+ro+'></div>';
-    h+='<div><p class="sl">Anstellungsart</p><span class="seg">'+ARTEN.map(function(a){ return '<button type="button" data-act="art" data-v="'+a[0]+'" aria-pressed="'+(r.art===a[0])+'" title="'+a[1]+'"'+ro+'>'+a[0]+'</button>'; }).join("")+'</span></div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:12px 32px"><div><p class="sl">Anstellungsart</p><span class="seg">'+ARTEN.map(function(a){ return '<button type="button" data-act="art" data-v="'+a[0]+'" aria-pressed="'+(r.art===a[0])+'" title="'+a[1]+'"'+ro+'>'+a[0]+'</button>'; }).join("")+'</span></div>';
+    h+='<div><p class="sl">'+(p==="prep"?"Anschreiben nötig?":"Mit Anschreiben beworben?")+'</p><span class="seg">'+[["","offen"],["ja","ja"],["nein","nein"]].map(function(o){ return '<button type="button" data-act="ansch" data-v="'+o[0]+'" aria-pressed="'+((r.anschreiben||"")===o[0])+'"'+ro+'>'+o[1]+'</button>'; }).join("")+'</span></div></div>';
     h+='<div><p class="sl">Stand</p><div class="path">'+chain(p).map(function(k,i){ return (i?'<span class="arrow">›</span>':'')+'<span class="step c-'+NODES[k].c+'"><span class="dot"></span>'+esc(NODES[k].l)+'</span>'; }).join("")+'</div></div>';
     if(canWrite){
       h+='<div><p class="sl">'+(n.ch.length?'Weiter zu':'Pfad beendet')+'</p><div class="nexts">';
@@ -781,7 +791,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function addNew(){
     if(!col||!canWrite) return;
     var ref=col.doc(), now=new Date().toISOString();
-    var doc={unternehmen:"",rolle:"",art:"",stelle:"",ort:"",weg:"",gehalt:"",eintritt:"",ansprechpartner:"",schritt:"",schrittDatum:"",notizen:"",pfad:"prep",daten:[],frist:"",entscheidung:"",erstellt:now,geaendert:now};
+    var doc={unternehmen:"",rolle:"",art:"",stelle:"",ort:"",weg:"",gehalt:"",eintritt:"",ansprechpartner:"",schritt:"",schrittDatum:"",notizen:"",pfad:"prep",daten:[],frist:"",entscheidung:"",anschreiben:"",erstellt:now,geaendert:now};
     withRetry(function(){ return ref.set(doc); }).then(function(){ undoStack.push({id:ref.id, created:true}); ui.mode="none"; show("job", ref.id); setTimeout(function(){ var f=document.querySelector('#detail [data-k="unternehmen"]'); if(f) f.focus(); },60); }).catch(function(e){ toast(errMsg(e)); });
   }
   function delJob(){
@@ -856,7 +866,9 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     else if(a==="fst"){ ui.fSt[v]=!ui.fSt[v]; renderDetail(true); }
     else if(a==="fart"){ ui.fArt[v]=!ui.fArt[v]; renderDetail(true); }
     else if(a==="fort"){ ui.fOrt[v]=!ui.fOrt[v]; renderDetail(true); }
-    else if(a==="clearF"){ ui.fSt={}; ui.fArt={}; ui.fOrt={}; renderDetail(true); }
+    else if(a==="clearF"){ ui.fSt={}; ui.fArt={}; ui.fOrt={}; ui.fAs={}; renderDetail(true); }
+    else if(a==="fas"){ ui.fAs[v]=!ui.fAs[v]; renderDetail(true); }
+    else if(a==="ansch"){ undoable(ui.job,{anschreiben:v}); renderDetail(true); }
     else if(a==="art"){ var r=view(ui.job); queue(ui.job,{art:r.art===v?"":v},true); renderDetail(true); renderTree(); }
     else if(a==="entsch"){ queue(ui.job,{entscheidung:v},true); renderAll(); renderDetail(true); }
     else if(a==="go") moveJob(ui.job, v);
@@ -900,7 +912,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   var KEY="bw-tracker-v1", TKEY="bw-tracker-token";
   var STORE={}, TOMB={}, SHA=null, DIRTY=false, CHANGE=0, storageOk=true;
   var sync={state:"load", msg:"", timer:null, inflight:false, again:false, lastPull:0, retry:null, savedAt:""};
-  var FIELDS=["unternehmen","rolle","art","stelle","ort","weg","gehalt","eintritt","ansprechpartner","schritt","schrittDatum","notizen","pfad","frist","entscheidung","firma","erstellt","geaendert"];
+  var FIELDS=["unternehmen","rolle","art","stelle","ort","weg","gehalt","eintritt","ansprechpartner","schritt","schrittDatum","notizen","pfad","frist","entscheidung","anschreiben","firma","erstellt","geaendert"];
   function newId(){ return "b"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
   function nowIso(){ return new Date().toISOString(); }
   function clean(r){
@@ -910,6 +922,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     if(!NODES[o.pfad]) o.pfad = (Array.isArray(r.schritte)&&r.schritte.length) ? "B" : "prep";
     o.daten = Array.isArray(r.daten) ? r.daten.filter(function(x){ return x && NODES[x.k] && isIso(x.d); }).map(function(x){ return {k:x.k, d:x.d}; }) : [];
     if(["","angenommen","abgelehnt"].indexOf(o.entscheidung)<0) o.entscheidung="";
+    if(["","ja","nein"].indexOf(o.anschreiben)<0) o.anschreiben="";
     if(!isIso(o.frist)) o.frist=""; if(!isIso(o.eintritt)) o.eintritt=""; if(!isIso(o.schrittDatum)) o.schrittDatum="";
     return o;
   }
