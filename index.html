@@ -56,11 +56,11 @@ button{cursor:pointer}
 .agenda .d{font-family:var(--mono);font-size:12px;color:var(--ink2)}
 .agenda .w{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agenda .w span{color:var(--muted)}
-.asm{display:inline-flex;align-items:center;gap:3px;margin-left:5px;vertical-align:-2px;color:var(--ink2);font-size:11px;font-weight:600}
-.asm svg{width:14px;height:14px}
-.asm.asneed{color:#B45309}
-.asm.lead{margin:0 4px 0 0}
-.pill .asm{margin-left:0}
+.art.as{background:#FEF3C7;color:#92400E}
+.er,.row .co > span.rl{display:flex;align-items:center;min-width:0}
+.er .rt,.rl .rt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.er .art,.rl .art{flex:none}
+.pill .art{margin-left:0}
 .tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--hover);color:var(--ink2)}
 .tag.soon{background:var(--c,var(--ink));color:#fff}
 .tag.late{background:#FFEDD5;color:var(--late)}
@@ -334,9 +334,10 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function dateOf(r,k){ var D=dates(r); for(var i=0;i<D.length;i++) if(D[i].k===k) return D[i].d||""; return ""; }
   function withDate(r,k,v){ var D=dates(r).filter(function(x){ return x.k!==k; }); if(v) D.push({k:k,d:v}); return D; }
   function role(r){ return r.rolle || r.stelle || ""; }
-  function artHtml(r){ return (r.art ? '<span class="art">'+esc(r.art)+'</span>' : '')+asHtml(r); }
-  var ENV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.2 8.5-6.2"/></svg>';
-  function asHtml(r,lead){ if(r.anschreiben!=="ja") return ""; var need=pfad(r)==="prep"; return '<span class="asm'+(need?' asneed':'')+(lead?' lead':'')+'" title="'+(need?'Anschreiben nötig':'Mit Anschreiben beworben')+'" aria-label="'+(need?'Anschreiben nötig':'Mit Anschreiben beworben')+'">'+ENV+'</span>'; }
+  /* Unterlagen: anschreiben "ja" = Lebenslauf und Anschreiben (LB+AS), "nein" = nur Lebenslauf (LB), "" = offen */
+  function docHtml(r){ if(r.anschreiben==="ja") return '<span class="art as" title="Lebenslauf und Anschreiben">LB+AS</span>'; if(r.anschreiben==="nein") return '<span class="art" title="Nur Lebenslauf">LB</span>'; return ''; }
+  function artHtml(r){ return (r.art ? '<span class="art">'+esc(r.art)+'</span>' : '')+docHtml(r); }
+  function roleLine(r){ return '<span class="rt">'+(esc(role(r))||'Rolle fehlt')+'</span>'+artHtml(r); }
   function cOf(r){ return NODES[pfad(r)].c; }
 
   /* Zustand einer Bewerbung: Text, Dringlichkeit, fehlendes Feld, Sortierschlüssel */
@@ -471,7 +472,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   }
   function entHtml(r){
     var i=info(r);
-    return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,role(r),r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en">'+esc(r.unternehmen||"Ohne Namen")+'</span><span class="er">'+asHtml(r,true)+(esc(role(r))||'Rolle fehlt')+(r.art?'<span class="art">'+esc(r.art)+'</span>':'')+'</span>'+statusHtml(r)+'</div>';
+    return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,role(r),r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en">'+esc(r.unternehmen||"Ohne Namen")+'</span><span class="er">'+roleLine(r)+'</span>'+statusHtml(r)+'</div>';
   }
   function nodeHtml(k,G,style){
     var n=NODES[k], list=G[k], c=list.length, show=expanded[k]?list:list.slice(0,MAXS);
@@ -546,7 +547,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function rowHtml(r){
     var p=pfad(r), i=info(r), d=dateOf(r,p)||dateOf(r,"B");
     var sub = i.need ? '<small class="late">'+esc(i.need.label)+' fehlt</small>' : '<small class="'+(i.lvl||"")+'">'+(i.badge?esc(i.badge)+' · ':'')+esc(i.txt)+'</small>';
-    return '<li class="row c-'+NODES[p].c+'" data-open-job="'+esc(r.id)+'" tabindex="0"><span class="dot"></span><span class="co"><b>'+esc(r.unternehmen||"Ohne Namen")+'</b><span>'+esc(role(r)||"Rolle fehlt")+artHtml(r)+'</span></span><span class="o">'+esc(r.ort||"")+'</span><span class="st">'+esc(chainLabel(p))+sub+'</span><span class="d">'+esc(fmt(d))+'</span></li>';
+    return '<li class="row c-'+NODES[p].c+'" data-open-job="'+esc(r.id)+'" tabindex="0"><span class="dot"></span><span class="co"><b>'+esc(r.unternehmen||"Ohne Namen")+'</b><span class="rl">'+roleLine(r)+'</span></span><span class="o">'+esc(r.ort||"")+'</span><span class="st">'+esc(chainLabel(p))+sub+'</span><span class="d">'+esc(fmt(d))+'</span></li>';
   }
   function on(o){ return Object.keys(o).filter(function(k){ return o[k]; }); }
   function filtered(list){
@@ -564,8 +565,8 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     h+='<div class="r"><span class="lab">Stufe</span>'+STUFEN.map(function(s){ return '<button type="button" class="pill c-'+s[0]+'" data-act="fst" data-v="'+s[0]+'" aria-pressed="'+!!ui.fSt[s[0]]+'"><span class="dot"></span>'+esc(s[1])+'</button>'; }).join("")+'</div>';
     h+='<div class="r"><span class="lab">Art</span>'+ARTEN.map(function(a){ return a[0]; }).concat(arts["–"]?["–"]:[]).map(function(k){ return '<button type="button" class="pill" data-act="fart" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fArt[k]+'">'+esc(k==="–"?"ohne Angabe":k)+'</button>'; }).join("")+'</div>';
     var ol=Object.keys(orte).sort(function(a,b){ return a==="–"?1:b==="–"?-1:a.localeCompare(b,"de"); });
-    var AS=[["ja","mit Anschreiben"],["nein","ohne"],["–","nicht angegeben"]];
-    h+='<div class="r"><span class="lab">Anschreiben</span>'+AS.map(function(a){ var n=A.filter(function(r){ return (r.anschreiben||"–")===a[0]; }).length; return '<button type="button" class="pill" data-act="fas" data-v="'+a[0]+'" aria-pressed="'+!!ui.fAs[a[0]]+'">'+(a[0]==="ja"?'<span class="asm">'+ENV+'</span>':'')+esc(a[1])+' <span class="nc">'+n+'</span></button>'; }).join("")+'</div>';
+    var AS=[["ja","LB+AS"],["nein","LB"],["–","offen"]];
+    h+='<div class="r"><span class="lab">Unterlagen</span>'+AS.map(function(a){ var n=A.filter(function(r){ return (r.anschreiben||"–")===a[0]; }).length; return '<button type="button" class="pill" data-act="fas" data-v="'+a[0]+'" aria-pressed="'+!!ui.fAs[a[0]]+'">'+esc(a[1])+' <span class="nc">'+n+'</span></button>'; }).join("")+'</div>';
     h+='<div class="r"><span class="lab">Ort</span>'+ol.map(function(k){ return '<button type="button" class="pill" data-act="fort" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fOrt[k]+'">'+esc(k==="–"?"ohne Ort":k)+'</button>'; }).join("")+'</div>';
     h+='</div>';
     h+= L.length ? '<ul class="list">'+L.map(rowHtml).join("")+'</ul>' : '<p class="empty-msg">Keine Bewerbung passt zu diesem Filter.</p>';
@@ -578,7 +579,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     h+='<ul class="list">'+Z.map(function(r){
       var i=info(r), zd=dateOf(r,pfad(r)), ent=r.entscheidung||"offen";
       var fr = r.frist ? fmt(r.frist) : '<span style="color:var(--late)">Frist fehlt</span>';
-      return '<li class="row offer c-z" data-open-job="'+esc(r.id)+'" tabindex="0"><span class="dot"></span><span class="co"><b>'+esc(r.unternehmen||"Ohne Namen")+'</b><span>'+esc(role(r)||"Rolle fehlt")+artHtml(r)+'</span></span><span class="o zd">'+(zd?'Zusage '+esc(fmtS(zd)):'')+'</span><span class="st">Antwort bis '+(r.frist?esc(fmt(r.frist)):'')+(r.frist?'':fr)+'<small class="'+(i.lvl||"")+'">'+(i.badge?esc(i.badge)+' · ':'')+esc(i.need?"Antwortfrist eintragen":i.txt)+'</small></span><span class="o">'+(ent==="angenommen"?'<b style="color:var(--c-z)">angenommen</b>':ent==="abgelehnt"?'abgelehnt':'Entscheidung offen')+'</span></li>';
+      return '<li class="row offer c-z" data-open-job="'+esc(r.id)+'" tabindex="0"><span class="dot"></span><span class="co"><b>'+esc(r.unternehmen||"Ohne Namen")+'</b><span class="rl">'+roleLine(r)+'</span></span><span class="o zd">'+(zd?'Zusage '+esc(fmtS(zd)):'')+'</span><span class="st">Antwort bis '+(r.frist?esc(fmt(r.frist)):'')+(r.frist?'':fr)+'<small class="'+(i.lvl||"")+'">'+(i.badge?esc(i.badge)+' · ':'')+esc(i.need?"Antwortfrist eintragen":i.txt)+'</small></span><span class="o">'+(ent==="angenommen"?'<b style="color:var(--c-z)">angenommen</b>':ent==="abgelehnt"?'abgelehnt':'Entscheidung offen')+'</span></li>';
     }).join("")+'</ul>';
     return h;
   }
@@ -661,7 +662,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function addFromFirm(id, kind){
     var u=null; firms.list.forEach(function(f){ if(f.id===id) u=f; }); if(!u||!canCreate()) return;
     var ref=col.doc(), now=new Date().toISOString(), init=kind==="init";
-    var doc={unternehmen:u.kurz, rolle:init?"Initiativbewerbung":"", art:init?"Vz":"", stelle:init?"Initiativbewerbung":"", ort:u.stadt||"", weg:"", gehalt:"", eintritt:"", ansprechpartner:"", schritt:"", schrittDatum:"",
+    var doc={unternehmen:u.kurz, rolle:init?"Initiativbewerbung":"", art:"Vz", stelle:init?"Initiativbewerbung":"", ort:u.stadt||"", weg:"", gehalt:"", eintritt:"", ansprechpartner:"", schritt:"", schrittDatum:"",
       notizen:"Aus „Mögliche Unternehmen“ (Rang "+u.rang+", Stufe "+u.stufe+")."+(u.karriere?" Karriereseite laut Recherche: "+u.karriere:""), pfad:"prep", daten:[], frist:"", entscheidung:"", anschreiben:"", firma:u.id, erstellt:now, geaendert:now};
     withRetry(function(){ return ref.set(doc); }).then(function(){
       undoStack.push({id:ref.id, created:true}); ui.fMore=null; ui.mode="firms"; show("job", ref.id);
@@ -711,7 +712,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     h+='<div class="dh"><button type="button" class="back" data-act="backFromJob">‹ '+esc(backLab)+'</button><span class="savestate" id="saveState">'+(pending[r.id]||inflight[r.id]?'Speichert …':'Gespeichert')+'</span></div>';
     h+='<div><input class="bare t1" data-k="unternehmen" value="'+esc(r.unternehmen||"")+'" placeholder="Unternehmen"'+ro+'><input class="bare t2" data-k="rolle" value="'+esc(r.rolle||"")+'" placeholder="Rolle, z. B. Junior Controller"'+ro+'></div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:12px 32px"><div><p class="sl">Anstellungsart</p><span class="seg">'+ARTEN.map(function(a){ return '<button type="button" data-act="art" data-v="'+a[0]+'" aria-pressed="'+(r.art===a[0])+'" title="'+a[1]+'"'+ro+'>'+a[0]+'</button>'; }).join("")+'</span></div>';
-    h+='<div><p class="sl">'+(p==="prep"?"Anschreiben nötig?":"Mit Anschreiben beworben?")+'</p><span class="seg">'+[["","offen"],["ja","ja"],["nein","nein"]].map(function(o){ return '<button type="button" data-act="ansch" data-v="'+o[0]+'" aria-pressed="'+((r.anschreiben||"")===o[0])+'"'+ro+'>'+o[1]+'</button>'; }).join("")+'</span></div></div>';
+    h+='<div><p class="sl">'+(p==="prep"?"Unterlagen nötig":"Beworben mit")+'</p><span class="seg">'+[["","offen"],["nein","LB"],["ja","LB+AS"]].map(function(o){ return '<button type="button" data-act="ansch" data-v="'+o[0]+'" aria-pressed="'+((r.anschreiben||"")===o[0])+'"'+ro+'>'+o[1]+'</button>'; }).join("")+'</span></div></div>';
     h+='<div><p class="sl">Stand</p><div class="path">'+chain(p).map(function(k,i){ return (i?'<span class="arrow">›</span>':'')+'<span class="step c-'+NODES[k].c+'"><span class="dot"></span>'+esc(NODES[k].l)+'</span>'; }).join("")+'</div></div>';
     if(canWrite){
       h+='<div><p class="sl">'+(n.ch.length?'Weiter zu':'Pfad beendet')+'</p><div class="nexts">';
