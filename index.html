@@ -148,7 +148,14 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .row.firm[aria-expanded="true"]{background:var(--soft);border-bottom-color:transparent}
 .row.firm .st small.warn{color:var(--late)}
 .row.firm .art.fst{margin:0 6px 0 0}
-.row.firm .fopen{color:var(--muted)}
+.row.firm .st a.flink{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+.row.firm .st a.flink:hover{text-decoration-color:var(--ink)}
+.row.firm .st a.srch{color:var(--muted)}
+.row.firm .st small.trk{color:var(--ink2);font-weight:500;display:flex;align-items:center;gap:6px}
+.row.firm .st small.trk .dot{width:8px;height:8px}
+.fsep{list-style:none;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:16px 6px 6px;border-bottom:2px solid var(--ink);font-size:12px;color:var(--muted)}
+.fsep b{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.fact{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .firmd{list-style:none;border-bottom:1px solid var(--line);background:var(--soft);padding:2px 6px 14px 50px}
 .firmd dl{margin:0;display:grid;grid-template-columns:118px minmax(0,1fr);gap:7px 14px;font-size:13px}
 .firmd dt{color:var(--muted);font-size:12.5px}
@@ -297,7 +304,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
 
   var rows=[], loaded=false, col=null, canWrite=true, dbState="pending";
   var pending={}, timers={}, inflight={}, undoStack=[], expanded={}, nextAll=false, treeDirty=false;
-  var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, confirmDel:false, fsort:"rank", fStufe:{}, fOpen:null};
+  var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, confirmDel:false, fsort:"rank", fStufe:{}, fTr:{}, fOpen:null, fMore:null};
   try{ var sv=JSON.parse(localStorage.getItem("bt-ui")||"{}"); if(sv.sort) ui.sort=sv.sort; if(sv.fsort==="alpha") ui.fsort="alpha"; }catch(e){}
   function saveUi(){ try{ localStorage.setItem("bt-ui",JSON.stringify({sort:ui.sort, fsort:ui.fsort})); }catch(e){} }
 
@@ -575,17 +582,17 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   }
 
   /* ---------- Mögliche Unternehmen (privat in bw-daten/unternehmen.json, nur lesen) ---------- */
-  var firms={state:"idle", list:[], removed:[], abbr:{}, note:"", src:"", stand:"", msg:""};
+  var firms={state:"idle", list:[], removed:[], abbr:{}, stufen:{}, note:"", src:"", stand:"", msg:""};
   function str(v){ return v==null?"":String(v); }
   function safeUrl(u){ u=str(u).trim(); return /^https:\/\/[^\s"'<>]+$/.test(u)?u:""; }
   function cleanFirm(u,i){
-    var o={}; ["id","kurz","name","ort","branche","ma","groesse","typ","warum","einstieg","marke","hinweis","quelle"].forEach(function(k){ o[k]=str(u[k]); }); o.kurz=o.kurz||o.name;
+    var o={}; ["id","kurz","name","stadt","ort","branche","ma","groesse","typ","warum","einstieg","marke","hinweis","quelle"].forEach(function(k){ o[k]=str(u[k]); }); o.kurz=o.kurz||o.name;
     o.id=o.id||("f"+i); o.rang=Number(u.rang)||999; o.nr=Number(u.nr)||0;
     o.stufe=/^[ABC]$/.test(u.stufe)?u.stufe:"–"; o.stufeRecherche=/^[ABC]$/.test(u.stufeRecherche)?u.stufeRecherche:"";
     o.warnung=u.warnung===true; o.karriere=safeUrl(u.karriere);
     return o;
   }
-  function resetFirms(){ firms={state:"idle", list:[], removed:[], abbr:{}, note:"", src:"", stand:"", msg:""}; ui.fOpen=null; var n=$("firmN"); if(n) n.textContent=""; }
+  function resetFirms(){ firms={state:"idle", list:[], removed:[], abbr:{}, stufen:{}, note:"", src:"", stand:"", msg:""}; ui.fOpen=null; ui.fMore=null; var n=$("firmN"); if(n) n.textContent=""; }
   function loadFirms(force){
     if(!token()){ firms.state="idle"; if(ui.mode==="firms") renderDetail(true); return; }
     if(firms.state==="load" || (firms.state==="ok" && !force)) return;
@@ -605,43 +612,79 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       firms.list=L.filter(function(u){ return u && typeof u==="object" && str(u.name).trim(); }).map(cleanFirm);
       firms.removed=(o&&Array.isArray(o.entfernt))?o.entfernt.filter(function(x){ return x&&x.name; }).map(function(x){ return {name:str(x.name), grund:str(x.grund)}; }):[];
       firms.abbr={}; if(o&&o.abkuerzungen&&typeof o.abkuerzungen==="object") Object.keys(o.abkuerzungen).forEach(function(k){ firms.abbr[k]=str(o.abkuerzungen[k]); });
+      firms.stufen={}; if(o&&o.stufen&&typeof o.stufen==="object") Object.keys(o.stufen).forEach(function(k){ firms.stufen[k]=str(o.stufen[k]); });
       firms.note=str(o&&o.hinweis); firms.src=str(o&&o.quelle); firms.stand=isIso(o&&o.stand)?o.stand:"";
       firms.state="ok"; $("firmN").textContent=firms.list.length||"";
       if(ui.mode==="firms") renderDetail(true);
     }).catch(function(e){ if(token()!==tok) return; firms.state="err"; firms.msg=(e&&e.msg)||"Fehler beim Laden"; if(ui.mode==="firms") renderDetail(true); });
   }
+  function norm(x){ return str(x).toLowerCase().replace(/[^a-z0-9äöüß]+/g,""); }
+  function tracked(u){ var a=norm(u.kurz), b=norm(u.name); return all().filter(function(r){ var n=norm(r.unternehmen); return r.firma===u.id || (n && (n===a || n===b)); }); }
+  function searchUrl(u){ return "https://www.google.com/search?q="+encodeURIComponent(u.kurz+" "+(u.stadt||"")+" Karriere Stellenangebote"); }
+  function linkHtml(u){ return u.karriere ? '<a class="flink" href="'+esc(u.karriere)+'" target="_blank" rel="noopener noreferrer">'+esc(u.karriere.replace(/^https:\/\//,""))+' ↗</a>' : '<a class="flink srch" href="'+esc(searchUrl(u))+'" target="_blank" rel="noopener noreferrer">Karriereseite suchen ↗</a>'; }
+  function canCreate(){ return !!(loaded&&canWrite&&col&&token()); }
   function firmRow(u){
-    var open=ui.fOpen===u.id, sub=[u.branche||"Branche unbekannt", u.typ].filter(Boolean).join(" · ");
-    var h='<li class="row firm" data-act="firm" data-v="'+esc(u.id)+'" tabindex="0" role="button" aria-expanded="'+open+'"><span class="rk">'+esc(u.rang)+'</span><span class="co"><b>'+esc(u.kurz)+'</b><span><span class="art fst">'+esc(u.stufe)+'</span>'+esc(sub)+'</span></span><span class="o">'+esc(u.ort)+'</span><span class="st">'+(u.einstieg?esc(u.einstieg):'<span class="fopen">Einstieg offen</span>')+(u.marke?'<small class="'+(u.warnung?'warn':'')+'">'+esc(u.marke)+'</small>':'')+'</span><span class="d">'+(u.ma?esc(u.ma)+' MA':'')+'</span></li>';
+    var open=ui.fOpen===u.id, T=tracked(u), sub=[u.branche||"Branche unbekannt", u.typ].filter(Boolean).join(" · ");
+    var tr=T.length?'<small class="trk c-'+cOf(T[0])+'"><span class="dot"></span>im Tracker · '+esc(NODES[pfad(T[0])].l)+(T.length>1?' (+'+(T.length-1)+')':'')+'</small>':'';
+    var h='<li class="row firm" data-act="firm" data-v="'+esc(u.id)+'" tabindex="0" role="button" aria-expanded="'+open+'"><span class="rk">'+esc(u.rang)+'</span><span class="co"><b>'+esc(u.kurz)+'</b><span><span class="art fst">'+esc(u.stufe)+'</span>'+esc(sub)+'</span></span><span class="o">'+esc(u.stadt||u.ort)+'</span><span class="st">'+linkHtml(u)+(u.marke?'<small class="'+(u.warnung?'warn':'')+'">'+esc(u.marke)+'</small>':'')+tr+'</span><span class="d">'+(u.ma?esc(u.ma)+' MA':'')+'</span></li>';
     if(!open) return h;
-    var link=u.karriere?'<a href="'+esc(u.karriere)+'" target="_blank" rel="noopener noreferrer">'+esc(u.karriere.replace(/^https:\/\//,""))+'</a> <small>Link aus der Recherche</small>':'<small>in der Recherche nicht geprüft oder nicht gefunden</small>';
+    var link=u.karriere?linkHtml(u)+' <small>Link aus der Recherche</small>':linkHtml(u)+' <small>in der Recherche nicht geprüft oder nicht gefunden</small>';
     var q=esc(u.quelle)+(u.nr?' <small>· Nr. '+esc(u.nr)+' in der Recherche'+(u.stufeRecherche?', dort Stufe '+esc(u.stufeRecherche):'')+'</small>':'');
     h+='<li class="firmd"><dl>';
     if(u.name&&u.name!==u.kurz) h+='<dt>Firmierung</dt><dd>'+esc(u.name)+'</dd>';
     h+='<dt>Warum passend</dt><dd>'+esc(u.warum||"–")+'</dd>';
-    h+='<dt>Einstieg</dt><dd>'+esc(u.einstieg||"in der Recherche offen")+'</dd>';
+    h+='<dt>Einstieg laut Recherche</dt><dd>'+esc(u.einstieg||"keine Angabe")+'</dd>';
     if(u.hinweis) h+='<dt>Hinweis</dt><dd class="'+(u.warnung?'warn':'')+'">'+esc(u.hinweis)+'</dd>';
     h+='<dt>Ort</dt><dd>'+esc(u.ort)+'</dd>';
     h+='<dt>Größe (MA)</dt><dd>'+esc(u.groesse||"–")+'</dd>';
     h+='<dt>Karriereseite</dt><dd>'+link+'</dd>';
     h+='<dt>Quelle</dt><dd>'+q+'</dd>';
+    h+='<dt>Tracker</dt><dd><div class="fact">';
+    T.forEach(function(r){ h+='<button type="button" class="nx c-'+cOf(r)+'" data-act="firmJob" data-v="'+esc(r.id)+'"><span class="dot"></span>'+esc(role(r)||"Eintrag")+' · '+esc(NODES[pfad(r)].l)+' öffnen</button>'; });
+    if(!T.length || ui.fMore===u.id){
+      var dis=canCreate()?'':' disabled';
+      h+='<button type="button" class="btn primary" data-act="firmNew" data-v="'+esc(u.id)+'" data-w="init"'+dis+'>Initiativbewerbung anlegen</button><button type="button" class="btn" data-act="firmNew" data-v="'+esc(u.id)+'" data-w="stelle"'+dis+'>Stelle anlegen</button>';
+      if(!canCreate()) h+='<small>Anlegen geht erst mit Token und geladenen Bewerbungen.</small>';
+    } else h+='<button type="button" class="linkbtn" data-act="firmMore" data-v="'+esc(u.id)+'">weitere Bewerbung anlegen</button>';
+    h+='</div></dd>';
     return h+'</dl></li>';
+  }
+  function addFromFirm(id, kind){
+    var u=null; firms.list.forEach(function(f){ if(f.id===id) u=f; }); if(!u||!canCreate()) return;
+    var ref=col.doc(), now=new Date().toISOString(), init=kind==="init";
+    var doc={unternehmen:u.kurz, rolle:init?"Initiativbewerbung":"", art:init?"Vz":"", stelle:init?"Initiativbewerbung":"", ort:u.stadt||"", weg:"", gehalt:"", eintritt:"", ansprechpartner:"", schritt:"", schrittDatum:"",
+      notizen:"Aus „Mögliche Unternehmen“ (Rang "+u.rang+", Stufe "+u.stufe+")."+(u.karriere?" Karriereseite laut Recherche: "+u.karriere:""), pfad:"prep", daten:[], frist:"", entscheidung:"", firma:u.id, erstellt:now, geaendert:now};
+    withRetry(function(){ return ref.set(doc); }).then(function(){
+      undoStack.push({id:ref.id, created:true}); ui.fMore=null; ui.mode="firms"; show("job", ref.id);
+      toast((init?"Initiativbewerbung":"Stelle")+" angelegt: "+u.kurz+" (In Bearbeitung)");
+      if(!init) setTimeout(function(){ var f=document.querySelector('#detail [data-k="rolle"]'); if(f) f.focus(); },60);
+    }).catch(function(e){ toast(errMsg(e)); });
   }
   function renderFirms(){
     var A=firms.list, st={}; A.forEach(function(u){ st[u.stufe]=1; });
-    var fs=on(ui.fStufe), L=A.filter(function(u){ return !fs.length||fs.indexOf(u.stufe)>=0; });
-    L.sort(function(a,b){ if(ui.fsort==="alpha") return a.kurz.localeCompare(b.kurz,"de",{sensitivity:"base"}); return a.rang-b.rang||a.kurz.localeCompare(b.kurz,"de"); });
+    var isT={}; A.forEach(function(u){ isT[u.id]=tracked(u).length>0; });
+    var fs=on(ui.fStufe), ft=on(ui.fTr);
+    var L=A.filter(function(u){ return (!fs.length||fs.indexOf(u.stufe)>=0) && (!ft.length||ft.indexOf(isT[u.id]?"tracker":"offen")>=0); });
+    var alpha=ui.fsort==="alpha";
+    L.sort(function(a,b){ if(alpha) return a.kurz.localeCompare(b.kurz,"de",{sensitivity:"base"}); return a.rang-b.rang||a.kurz.localeCompare(b.kurz,"de"); });
     var h='<div class="dh"><p class="crumb">Mögliche Unternehmen<span class="cnt">'+(firms.state==="ok"?L.length+(L.length!==A.length?' von '+A.length:''):'')+'</span></p><button type="button" class="xbtn" data-act="closeDetail" aria-label="Schließen">✕</button></div>';
     if(!token()) return h+'<p class="empty-msg">Die Liste liegt privat in bw-daten. Trag oben über „Token eintragen“ deinen Token ein, dann erscheint sie hier.</p>';
     if(firms.state==="err") return h+'<p class="empty-msg">'+esc(firms.msg)+'. <button type="button" class="linkbtn" data-act="firmReload">Erneut laden</button></p>';
     if(firms.state!=="ok") return h+'<p class="empty-msg">wird geladen …</p>';
     if(!A.length) return h+'<p class="empty-msg">In unternehmen.json stehen keine Unternehmen.</p>';
+    var nT=A.filter(function(u){ return isT[u.id]; }).length;
     h+='<div class="ctrl">';
-    h+='<div class="r"><span class="lab">Sortierung</span><span class="seg"><button type="button" data-act="fsort" data-v="rank" aria-pressed="'+(ui.fsort!=="alpha")+'">Rang</button><button type="button" data-act="fsort" data-v="alpha" aria-pressed="'+(ui.fsort==="alpha")+'">A–Z</button></span></div>';
+    h+='<div class="r"><span class="lab">Sortierung</span><span class="seg"><button type="button" data-act="fsort" data-v="rank" aria-pressed="'+!alpha+'">Rang</button><button type="button" data-act="fsort" data-v="alpha" aria-pressed="'+alpha+'">A–Z</button></span></div>';
     h+='<div class="r"><span class="lab">Stufe</span>'+Object.keys(st).sort().map(function(k){ return '<button type="button" class="pill" data-act="fstufe" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fStufe[k]+'">Stufe '+esc(k)+' <span class="nc">'+A.filter(function(u){ return u.stufe===k; }).length+'</span></button>'; }).join("")+'</div>';
+    h+='<div class="r"><span class="lab">Status</span><button type="button" class="pill" data-act="ftr" data-v="offen" aria-pressed="'+!!ui.fTr.offen+'">noch offen <span class="nc">'+(A.length-nT)+'</span></button><button type="button" class="pill" data-act="ftr" data-v="tracker" aria-pressed="'+!!ui.fTr.tracker+'">im Tracker <span class="nc">'+nT+'</span></button></div>';
     h+='</div>';
-    if(firms.note||firms.src) h+='<p class="fnote">'+(firms.src?'<b>'+esc(firms.src)+'.</b> ':'')+esc(firms.note)+' Klick auf ein Unternehmen zeigt Begründung, Größe, Karriereseite und Quelle.</p>';
-    h+= L.length ? '<ul class="list">'+L.map(firmRow).join("")+'</ul>' : '<p class="empty-msg">Kein Unternehmen in dieser Stufe.</p>';
+    h+='<p class="fnote"><b>So gehst du vor:</b> Karriereseite öffnen. Gibt es eine passende Stelle, in den Details „Stelle anlegen“, sonst „Initiativbewerbung anlegen“. Angelegte Unternehmen sind mit „im Tracker“ markiert.</p>';
+    if(firms.note||firms.src) h+='<p class="fnote">'+(firms.src?esc(firms.src)+'. ':'')+esc(firms.note)+'</p>';
+    if(!L.length) h+='<p class="empty-msg">Kein Unternehmen passt zu diesem Filter.</p>';
+    else {
+      var prev=null;
+      h+='<ul class="list">'+L.map(function(u){ var sep=''; if(!alpha && u.stufe!==prev){ sep='<li class="fsep"><b>Stufe '+esc(u.stufe)+'</b>'+(firms.stufen[u.stufe]?'<span>'+esc(firms.stufen[u.stufe])+'</span>':'')+'</li>'; prev=u.stufe; } return sep+firmRow(u); }).join("")+'</ul>';
+    }
     if(firms.removed.length) h+='<details class="fmore"><summary>Nicht übernommen ('+firms.removed.length+')</summary><ul>'+firms.removed.map(function(x){ return '<li><b>'+esc(x.name)+'</b>'+(x.grund?': '+esc(x.grund):'')+'</li>'; }).join("")+'</ul></details>';
     var ak=Object.keys(firms.abbr);
     if(ak.length) h+='<details class="fmore"><summary>Abkürzungen der Quellen</summary><ul>'+ak.map(function(k){ return '<li><b>'+esc(k)+'</b>: '+esc(firms.abbr[k])+'</li>'; }).join("")+'</ul></details>';
@@ -654,7 +697,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function renderJob(){
     var r=view(ui.job); if(!r){ ui.mode="none"; ui.job=null; return ""; }
     var p=pfad(r), n=NODES[p], ro=canWrite?'':' disabled', t=today();
-    var backLab = ui.from==="node"?NODES[ui.node].l:ui.from==="all"?"Alle Bewerbungen":ui.from==="offers"?"Angebote":"Schließen";
+    var backLab = ui.from==="node"?NODES[ui.node].l:ui.from==="all"?"Alle Bewerbungen":ui.from==="offers"?"Angebote":ui.from==="firms"?"Mögliche Unternehmen":"Schließen";
     var h='<div class="job">';
     h+='<div class="dh"><button type="button" class="back" data-act="backFromJob">‹ '+esc(backLab)+'</button><span class="savestate" id="saveState">'+(pending[r.id]||inflight[r.id]?'Speichert …':'Gespeichert')+'</span></div>';
     h+='<div><input class="bare t1" data-k="unternehmen" value="'+esc(r.unternehmen||"")+'" placeholder="Unternehmen"'+ro+'><input class="bare t2" data-k="rolle" value="'+esc(r.rolle||"")+'" placeholder="Rolle, z. B. Junior Controller"'+ro+'></div>';
@@ -713,7 +756,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     ui.mode=mode; renderTree(); renderDetail(true);
     if(mode!=="none"){ var d=$("detail"), r=d.getBoundingClientRect(); if(r.top>window.innerHeight-140 && d.scrollIntoView) d.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); }
   }
-  function goBack(){ var f=ui.from; if(f==="node") show("node",ui.node); else if(f==="all"||f==="offers") show(f); else show("none"); }
+  function goBack(){ var f=ui.from; if(f==="node") show("node",ui.node); else if(f==="all"||f==="offers"||f==="firms") show(f); else show("none"); }
 
   /* ---------- Eingaben ---------- */
   document.addEventListener("input", function(ev){
@@ -790,7 +833,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
 
   /* ---------- Klicks ---------- */
   document.addEventListener("click", function(ev){
-    if(ev.target.closest(".ent")) return;
+    if(ev.target.closest(".ent")||ev.target.closest("a[href]")) return;
     var nh=ev.target.closest("[data-open-node]");
     if(nh){ var k=nh.getAttribute("data-open-node"); if(ui.mode==="node"&&ui.node===k) show("none"); else show("node",k); return; }
     var oj=ev.target.closest("[data-open-job]"); if(oj){ show("job", oj.getAttribute("data-open-job")); return; }
@@ -806,6 +849,10 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     else if(a==="fstufe"){ ui.fStufe[v]=!ui.fStufe[v]; renderDetail(true); }
     else if(a==="firm"){ ui.fOpen = ui.fOpen===v ? null : v; renderDetail(true); var fr=$("detail").querySelector('.row.firm[data-v="'+(window.CSS&&CSS.escape?CSS.escape(v):v)+'"]'); if(fr) fr.focus({preventScroll:true}); }
     else if(a==="firmReload") loadFirms(true);
+    else if(a==="ftr"){ ui.fTr[v]=!ui.fTr[v]; renderDetail(true); }
+    else if(a==="firmNew") addFromFirm(v, t.getAttribute("data-w"));
+    else if(a==="firmMore"){ ui.fMore=v; renderDetail(true); }
+    else if(a==="firmJob") show("job", v);
     else if(a==="fst"){ ui.fSt[v]=!ui.fSt[v]; renderDetail(true); }
     else if(a==="fart"){ ui.fArt[v]=!ui.fArt[v]; renderDetail(true); }
     else if(a==="fort"){ ui.fOrt[v]=!ui.fOrt[v]; renderDetail(true); }
@@ -853,7 +900,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   var KEY="bw-tracker-v1", TKEY="bw-tracker-token";
   var STORE={}, TOMB={}, SHA=null, DIRTY=false, CHANGE=0, storageOk=true;
   var sync={state:"load", msg:"", timer:null, inflight:false, again:false, lastPull:0, retry:null, savedAt:""};
-  var FIELDS=["unternehmen","rolle","art","stelle","ort","weg","gehalt","eintritt","ansprechpartner","schritt","schrittDatum","notizen","pfad","frist","entscheidung","erstellt","geaendert"];
+  var FIELDS=["unternehmen","rolle","art","stelle","ort","weg","gehalt","eintritt","ansprechpartner","schritt","schrittDatum","notizen","pfad","frist","entscheidung","firma","erstellt","geaendert"];
   function newId(){ return "b"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
   function nowIso(){ return new Date().toISOString(); }
   function clean(r){
