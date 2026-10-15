@@ -25,7 +25,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14p
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
-.page{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:26px 72px;display:flex;flex-direction:column;gap:24px}
+.page{max-width:1680px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:26px 72px;display:flex;flex-direction:column;gap:24px}
 .c-prep{--c:var(--c-prep)} .c-bew{--c:var(--c-bew)} .c-t{--c:var(--c-t)} .c-g{--c:var(--c-g)} .c-g2{--c:var(--c-g2)} .c-z{--c:var(--c-z)} .c-a{--c:var(--c-a)}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--c,var(--line2));flex:none;display:inline-block}
 
@@ -56,7 +56,6 @@ button{cursor:pointer}
 .agenda .d{font-family:var(--mono);font-size:12px;color:var(--ink2)}
 .agenda .w{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agenda .w span{color:var(--muted)}
-.art.as{background:#FEF3C7;color:#92400E}
 .er,.row .co > span.rl{display:flex;align-items:center;min-width:0}
 .er .rt,.rl .rt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .er .art,.rl .art{flex:none}
@@ -91,6 +90,20 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .en{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
 .er{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
 .art{font-family:var(--mono);font-size:10.5px;font-weight:500;color:var(--ink2);background:var(--hover);border-radius:4px;padding:0 4px;margin-left:5px}
+/* Kennzeichen: Beschäftigungsart hell hinterlegt, Unterlagen weiß oder braun gefüllt */
+.art.k-vz{background:#F1E6DA;color:#6B4423;font-weight:600}
+.art.k-tz{background:#D4D4D8;color:#27272A;font-weight:600}
+.art.k-tr{background:#EDE9FE;color:#6D28D9;font-weight:600}
+.art.k-pr{background:#FAE8FF;color:#A21CAF;font-weight:600}
+.art.k-lb{background:#fff;color:#3F3F46;box-shadow:inset 0 0 0 1px var(--line2);font-weight:600}
+.art.k-as{background:#7A4A22;color:#fff;font-weight:600}
+.dot.rb{background:conic-gradient(var(--c-bew) 0 25%,var(--c-t) 0 50%,var(--c-g) 0 75%,var(--c-g2) 0)}
+.nb.hrow .ents{flex-direction:row;flex-wrap:wrap;gap:6px 8px}
+.nb.hrow .ent{width:var(--ew);flex:none}
+.tb .n.warn{color:var(--late);opacity:1;font-weight:600}
+.tb[aria-pressed="true"] .n.warn{color:#FDBA74}
+.pill.zero{opacity:.5}
+.nextlist{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .es{font-size:11.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2);margin-top:2px}
 .es.muted{color:var(--muted)}
 .es.late{color:var(--late);font-weight:500}
@@ -258,21 +271,14 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   <div id="lockNote" class="importbar" hidden><p><b>Deine Bewerbungsdaten sind privat.</b><small>Sie liegen im privaten Repository bw-daten. Klick oben auf „Token eintragen“ und gib deinen Fine-grained Token ein, um sie auf diesem Gerät zu sehen und zu bearbeiten.</small></p></div>
   <div id="importBar" hidden></div>
 
-  <section class="nexts-box" id="nextBox" aria-labelledby="nextL">
-    <p class="sl" id="nextL">Als Nächstes</p>
-    <ul class="agenda" id="agenda"></ul>
-  </section>
-
-  <div class="tree" id="tree" aria-label="Bewerbungspfad"></div>
-
-  <div class="below">
-    <div class="toolbar">
+  <div class="toolbar">
+      <button type="button" class="tb" id="nextBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Als Nächstes <span class="n" id="nextN"></span></button>
       <button type="button" class="tb" id="eyeBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Alle Bewerbungen</button>
       <button type="button" class="tb" id="offerBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.6L16 9.5"/></svg>Angebote <span class="n" id="offerN"></span></button>
       <button type="button" class="tb" id="firmBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 9h4a1 1 0 0 1 1 1v11"/><path d="M2.5 21h19"/><path d="M8 8h3M8 12h3M8 16h3"/></svg>Mögliche Unternehmen <span class="n" id="firmN"></span></button>
-    </div>
-    <div id="detail"></div>
   </div>
+  <div id="detail" hidden></div>
+  <div class="tree" id="tree" aria-label="Bewerbungspfad"></div>
 </div>
 <div id="toastHost"></div>
 
@@ -335,8 +341,9 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function withDate(r,k,v){ var D=dates(r).filter(function(x){ return x.k!==k; }); if(v) D.push({k:k,d:v}); return D; }
   function role(r){ return r.rolle || r.stelle || ""; }
   /* Unterlagen: anschreiben "ja" = Lebenslauf und Anschreiben (LB+AS), "nein" = nur Lebenslauf (LB), "" = offen */
-  function docHtml(r){ if(r.anschreiben==="ja") return '<span class="art as" title="Lebenslauf und Anschreiben">LB+AS</span>'; if(r.anschreiben==="nein") return '<span class="art" title="Nur Lebenslauf">LB</span>'; return ''; }
-  function artHtml(r){ return (r.art ? '<span class="art">'+esc(r.art)+'</span>' : '')+docHtml(r); }
+  function docHtml(r){ if(r.anschreiben==="ja") return '<span class="art k-as" title="Lebenslauf und Anschreiben">LB+AS</span>'; if(r.anschreiben==="nein") return '<span class="art k-lb" title="Nur Lebenslauf">LB</span>'; return ''; }
+  function artCls(a){ return /^(Vz|Tz|Tr|Pr)$/.test(a) ? ' k-'+a.toLowerCase() : ''; }
+  function artHtml(r){ return (r.art ? '<span class="art'+artCls(r.art)+'">'+esc(r.art)+'</span>' : '')+docHtml(r); }
   function roleLine(r){ return '<span class="rt">'+(esc(role(r))||'Rolle fehlt')+'</span>'+artHtml(r); }
   function cOf(r){ return NODES[pfad(r)].c; }
 
@@ -423,7 +430,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     if(!loaded){ el.innerHTML='<li>'+(dbState==="none"?"Speichern ist in dieser Ansicht nicht verfügbar.":"wird geladen …")+'</li>'; return; }
     var c={prep:0,run:0,z:0,a:0};
     all().forEach(function(r){ var k=cOf(r); if(k==="prep") c.prep++; else if(k==="z") c.z++; else if(k==="a") c.a++; else c.run++; });
-    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li class="c-g"><span class="dot"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
+    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li><span class="dot rb" title="Bewerbung, Test, Gespräch, 2. Gespräch"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
     $("undoBtn").disabled=!undoStack.length;
     $("addBtn").disabled=!(loaded&&canWrite&&col&&token());
     $("offerN").textContent=c.z?c.z:"";
@@ -448,18 +455,26 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     out.sort(function(a,b){ var x=a.d||"0000", y=b.d||"0000"; return x<y?-1:x>y?1:0; });
     return out;
   }
+  function agendaHot(items){ return items.some(function(it){ return it.tag && (it.tag[0]==="late"||it.tag[0]==="soon"||it.tag[0]==="need"); }); }
   function renderAgenda(){
-    var el=$("agenda"); if(!loaded){ el.innerHTML=""; return; }
-    var items=agendaItems(), show=nextAll?items:items.slice(0,5);
-    var lab=$("nextL"); lab.innerHTML='Als Nächstes'+(items.length>5?'<button type="button" class="linkbtn" data-act="nextAll">'+(nextAll?'weniger':'alle '+items.length+' anzeigen')+'</button>':'');
-    if(!items.length){ el.innerHTML='<li class="static"><span class="empty-msg" style="margin:4px 0">Keine Termine, Fristen oder Aufgaben. Sobald eine Bewerbung im Test oder Gespräch steht, erscheint ihr Termin hier.</span></li>'; return; }
-    el.innerHTML=show.map(function(it){
+    var n=$("nextN"); if(!n) return;
+    if(!loaded){ n.textContent=""; n.className="n"; return; }
+    var items=agendaItems(); n.textContent=items.length||""; n.className="n"+(agendaHot(items)?" warn":"");
+  }
+  function renderNext(){
+    var items=agendaItems();
+    var h='<div class="dh"><p class="crumb">Als Nächstes<span class="cnt">'+items.length+'</span></p><button type="button" class="xbtn" data-act="closeDetail" aria-label="Schließen">✕</button></div>';
+    if(!items.length) return h+'<p class="empty-msg">Keine Termine, Fristen oder Aufgaben. Sobald eine Bewerbung im Test oder Gespräch steht, erscheint ihr Termin hier.</p>';
+    return h+'<ul class="agenda nextlist">'+items.map(function(it){
       return '<li class="c-'+it.c+'" data-open-job="'+esc(it.id)+'" tabindex="0"><span class="d">'+(it.d?esc(fmt(it.d)):'–')+'</span><span class="dot"></span><span class="w">'+esc(it.co||"Ohne Namen")+' <span>· '+esc(it.w)+'</span></span>'+(it.tag?'<span class="tag '+it.tag[0]+'">'+esc(it.tag[1])+'</span>':'<span></span>')+'</li>';
-    }).join("");
+    }).join("")+'</ul>';
   }
 
   /* ---------- Baum ---------- */
-  var MAXS=4, HEAD=26, ENT=70, EGAP=6, GAP=16;
+  var MAXS=4, HEAD=26, ENT=70, EGAP=6, GAP=10, GAPTG=36, PREPCAP=MAXS, EW=0;
+  function prepH(n){ if(!n) return HEAD+4; var rows=expanded.prep?Math.ceil(n/PREPCAP):1; return HEAD + 6 + rows*(ENT+EGAP) + (n>PREPCAP?22:0) + 4; }
+  /* größere Lücke zwischen den Ästen Gespräch und Test */
+  function gapBefore(k,c){ return (k==="B"&&c==="B.T") ? GAPTG : GAP; }
   function groups(){ var g={}; ORDER.forEach(function(k){ g[k]=[]; }); all().forEach(function(r){ g[pfad(r)].push(r); }); Object.keys(g).forEach(function(k){ g[k].sort(prioSort); }); return g; }
   function boxH(n,key){ var s=expanded[key]?n:Math.min(n,MAXS); return HEAD + (s?6+s*(ENT+EGAP):0) + (n>MAXS?22:0) + 4; }
   function statusHtml(r){
@@ -475,42 +490,45 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,role(r),r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en">'+esc(r.unternehmen||"Ohne Namen")+'</span><span class="er">'+roleLine(r)+'</span>'+statusHtml(r)+'</div>';
   }
   function nodeHtml(k,G,style){
-    var n=NODES[k], list=G[k], c=list.length, show=expanded[k]?list:list.slice(0,MAXS);
-    var h='<div class="nb c-'+n.c+(c?'':' empty')+(ui.mode==="node"&&ui.node===k?' sel':'')+'" data-node="'+k+'"'+(style?' style="'+style+'"':'')+'>';
+    var n=NODES[k], list=G[k], c=list.length, max=k==="prep"?PREPCAP:MAXS, show=expanded[k]?list:list.slice(0,max);
+    var h='<div class="nb c-'+n.c+(c?'':' empty')+(k==="prep"&&EW?' hrow':'')+(ui.mode==="node"&&ui.node===k?' sel':'')+'" data-node="'+k+'"'+(style?' style="'+style+'"':'')+'>';
     h+='<div class="nh" data-open-node="'+k+'" tabindex="0" role="button" aria-label="'+esc(chainLabel(k))+', '+c+' Bewerbungen"><span class="nd" data-anchor="'+k+'"></span><span class="nl">'+esc(n.l)+'</span><span class="nc">'+(c||"")+'</span></div>';
     if(c) h+='<div class="ents">'+show.map(entHtml).join("")+'</div>';
-    if(c>MAXS) h+='<button type="button" class="more" data-act="more" data-key="'+k+'">'+(expanded[k]?'weniger':'+ '+(c-MAXS)+' weitere')+'</button>';
+    if(c>max) h+='<button type="button" class="more" data-act="more" data-key="'+k+'">'+(expanded[k]?'weniger':'+ '+(c-max)+' weitere')+'</button>';
     return h+'</div>';
   }
   var LAY=null;
   function treeBusy(){ var a=document.activeElement; return a && $("tree").contains(a) && a.matches("input"); }
   function renderTree(){
     var host=$("tree");
+    if(host.hidden){ treeDirty=true; return; }
     if(drag){ treeDirty=true; return; }
     if(treeBusy()){ treeDirty=true; return; }
     treeDirty=false;
     if(!loaded){ host.innerHTML='<p class="empty-msg">wird geladen …</p>'; host.style.height=""; return; }
     var G=groups(), W=host.clientWidth||1000;
-    if(W<720){ renderOutline(host,G); return; }
+    if(W<720){ PREPCAP=MAXS; EW=0; renderOutline(host,G); return; }
     host.classList.remove("outline");
-    var colW=W/5, bw=Math.max(140, colW-40);
+    /* Karten begrenzt breit, damit die Verbindungen bei breitem Bildschirm länger werden */
+    var colW=W/5, bw=Math.min(230, Math.max(150, colW-40));
+    EW=bw; PREPCAP=Math.max(1, Math.floor((W-46+8)/(EW+8)));
     var H={}, SUB={}, Y={};
-    ORDER.forEach(function(k){ H[k]=boxH(G[k].length,k); });
-    function sub(k){ var n=NODES[k]; if(!n.ch.length) return SUB[k]=H[k]; var s=0; n.ch.forEach(function(c,i){ s+=sub(c)+(i?GAP:0); }); return SUB[k]=Math.max(H[k],s); }
+    ORDER.forEach(function(k){ H[k]= k==="prep" ? prepH(G[k].length) : boxH(G[k].length,k); });
+    function sub(k){ var n=NODES[k]; if(!n.ch.length) return SUB[k]=H[k]; var s=0; n.ch.forEach(function(c,i){ s+=sub(c)+(i?gapBefore(k,c):0); }); return SUB[k]=Math.max(H[k],s); }
     sub("B");
     function place(k,top){
       var n=NODES[k];
       if(!n.ch.length){ Y[k]=top+(SUB[k]-H[k])/2; return; }
-      var s=0; n.ch.forEach(function(c,i){ s+=SUB[c]+(i?GAP:0); });
+      var s=0; n.ch.forEach(function(c,i){ s+=SUB[c]+(i?gapBefore(k,c):0); });
       var t=top+(SUB[k]-s)/2;
-      n.ch.forEach(function(c){ place(c,t); t+=SUB[c]+GAP; });
+      n.ch.forEach(function(c,i){ if(i) t+=gapBefore(k,c); place(c,t); t+=SUB[c]; });
       var first=Y[n.ch[0]], last=Y[n.ch[n.ch.length-1]];
       Y[k]=Math.min(Math.max((first+last)/2, top), top+SUB[k]-H[k]);
     }
-    var offset=H.prep+48; place("B",offset); Y.prep=0;
+    var offset=H.prep+24; place("B",offset); Y.prep=0;
     var total=offset+SUB.B;
     var html='<svg id="wires"></svg>';
-    ORDER.forEach(function(k){ var x=k==="prep"?0:depth(k)*colW; html+=nodeHtml(k,G,'left:'+(x+8)+'px;top:'+(Y[k]+6)+'px;width:'+bw+'px'); });
+    ORDER.forEach(function(k){ var x=k==="prep"?0:depth(k)*colW, w=k==="prep"?(W-16):bw; html+=nodeHtml(k,G,'left:'+(x+8)+'px;top:'+(Y[k]+6)+'px;width:'+w+'px'+(k==="prep"?';--ew:'+EW+'px':'')); });
     host.innerHTML=html; host.style.height=(total+10)+"px";
     LAY=true; drawWires();
   }
@@ -550,9 +568,12 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     return '<li class="row c-'+NODES[p].c+'" data-open-job="'+esc(r.id)+'" tabindex="0"><span class="dot"></span><span class="co"><b>'+esc(r.unternehmen||"Ohne Namen")+'</b><span class="rl">'+roleLine(r)+'</span></span><span class="o">'+esc(r.ort||"")+'</span><span class="st">'+esc(chainLabel(p))+sub+'</span><span class="d">'+esc(fmt(d))+'</span></li>';
   }
   function on(o){ return Object.keys(o).filter(function(k){ return o[k]; }); }
+  /* Orte im Filter: Bielefeld, Brackwede, Gütersloh und alle Städte und Gemeinden im Kreis Gütersloh */
+  var ORTE=[["Bielefeld",/bielefeld/],["Brackwede",/brackwede/],["Gütersloh",/g(ü|ue)tersloh/],["Borgholzhausen",/borgholzhausen/],["Halle (Westf.)",/halle/],["Harsewinkel",/harsewinkel/],["Herzebrock-Clarholz",/herzebrock|clarholz/],["Langenberg",/langenberg/],["Rheda-Wiedenbrück",/rheda|wiedenbr/],["Rietberg",/rietberg/],["Schloß Holte-Stukenbrock",/holte|stukenbrock/],["Steinhagen",/steinhagen/],["Verl",/(^|[^a-zäöüß])verl([^a-zäöüß]|$)/],["Versmold",/versmold/],["Werther (Westf.)",/werther/]];
+  function ortKeys(r){ var o=String(r.ort||"").toLowerCase(); if(!o.trim()) return ["–"]; var k=ORTE.filter(function(x){ return x[1].test(o); }).map(function(x){ return x[0]; }); return k.length?k:[String(r.ort).trim()]; }
   function filtered(list){
     var fs=on(ui.fSt), fa=on(ui.fArt), fo=on(ui.fOrt), fx=on(ui.fAs);
-    return list.filter(function(r){ return (!fs.length||fs.indexOf(cOf(r))>=0) && (!fa.length||fa.indexOf(r.art||"–")>=0) && (!fo.length||fo.indexOf(r.ort||"–")>=0) && (!fx.length||fx.indexOf(r.anschreiben||"–")>=0); });
+    return list.filter(function(r){ return (!fs.length||fs.indexOf(cOf(r))>=0) && (!fa.length||fa.indexOf(r.art||"–")>=0) && (!fo.length||ortKeys(r).some(function(k){ return fo.indexOf(k)>=0; })) && (!fx.length||fx.indexOf(r.anschreiben||"–")>=0); });
   }
   function sortList(list){ return list.sort(function(a,b){ if(ui.sort==="alpha") return (a.unternehmen||"").localeCompare(b.unternehmen||"","de"); var x=rank(a), y=rank(b); if(x!==y) return y-x; return prioSort(a,b); }); }
   function renderAllList(){
@@ -563,11 +584,13 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     h+='<div class="ctrl">';
     h+='<div class="r"><span class="lab">Sortierung</span><span class="seg"><button type="button" data-act="sort" data-v="progress" aria-pressed="'+(ui.sort==="progress")+'">Fortschritt</button><button type="button" data-act="sort" data-v="alpha" aria-pressed="'+(ui.sort==="alpha")+'">A–Z</button></span></div>';
     h+='<div class="r"><span class="lab">Stufe</span>'+STUFEN.map(function(s){ return '<button type="button" class="pill c-'+s[0]+'" data-act="fst" data-v="'+s[0]+'" aria-pressed="'+!!ui.fSt[s[0]]+'"><span class="dot"></span>'+esc(s[1])+'</button>'; }).join("")+'</div>';
-    h+='<div class="r"><span class="lab">Art</span>'+ARTEN.map(function(a){ return a[0]; }).concat(arts["–"]?["–"]:[]).map(function(k){ return '<button type="button" class="pill" data-act="fart" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fArt[k]+'">'+esc(k==="–"?"ohne Angabe":k)+'</button>'; }).join("")+'</div>';
-    var ol=Object.keys(orte).sort(function(a,b){ return a==="–"?1:b==="–"?-1:a.localeCompare(b,"de"); });
+    h+='<div class="r"><span class="lab">Art</span>'+ARTEN.map(function(a){ return a[0]; }).concat(arts["–"]?["–"]:[]).map(function(k){ return '<button type="button" class="pill" data-act="fart" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fArt[k]+'">'+(k==="–"?"ohne Angabe":'<span class="art'+artCls(k)+'">'+esc(k)+'</span>')+'</button>'; }).join("")+'</div>';
+    var oc={}; A.forEach(function(r){ ortKeys(r).forEach(function(k){ oc[k]=(oc[k]||0)+1; }); });
+    var ofix=ORTE.map(function(x){ return x[0]; });
+    var ol=ofix.concat(Object.keys(oc).filter(function(k){ return ofix.indexOf(k)<0 && k!=="–"; }).sort(function(a,b){ return a.localeCompare(b,"de"); }), oc["–"]?["–"]:[]);
     var AS=[["ja","LB+AS"],["nein","LB"],["–","offen"]];
-    h+='<div class="r"><span class="lab">Unterlagen</span>'+AS.map(function(a){ var n=A.filter(function(r){ return (r.anschreiben||"–")===a[0]; }).length; return '<button type="button" class="pill" data-act="fas" data-v="'+a[0]+'" aria-pressed="'+!!ui.fAs[a[0]]+'">'+esc(a[1])+' <span class="nc">'+n+'</span></button>'; }).join("")+'</div>';
-    h+='<div class="r"><span class="lab">Ort</span>'+ol.map(function(k){ return '<button type="button" class="pill" data-act="fort" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fOrt[k]+'">'+esc(k==="–"?"ohne Ort":k)+'</button>'; }).join("")+'</div>';
+    h+='<div class="r"><span class="lab">Unterlagen</span>'+AS.map(function(a){ var n=A.filter(function(r){ return (r.anschreiben||"–")===a[0]; }).length; return '<button type="button" class="pill" data-act="fas" data-v="'+a[0]+'" aria-pressed="'+!!ui.fAs[a[0]]+'">'+(a[0]==="ja"?'<span class="art k-as">LB+AS</span>':a[0]==="nein"?'<span class="art k-lb">LB</span>':'offen')+' <span class="nc">'+n+'</span></button>'; }).join("")+'</div>';
+    h+='<div class="r"><span class="lab">Ort</span>'+ol.map(function(k){ var n=oc[k]||0; return '<button type="button" class="pill'+(n?'':' zero')+'" data-act="fort" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fOrt[k]+'">'+esc(k==="–"?"ohne Ort":k)+' <span class="nc">'+n+'</span></button>'; }).join("")+'</div>';
     h+='</div>';
     h+= L.length ? '<ul class="list">'+L.map(rowHtml).join("")+'</ul>' : '<p class="empty-msg">Keine Bewerbung passt zu diesem Filter.</p>';
     return h;
@@ -707,7 +730,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function renderJob(){
     var r=view(ui.job); if(!r){ ui.mode="none"; ui.job=null; return ""; }
     var p=pfad(r), n=NODES[p], ro=canWrite?'':' disabled', t=today();
-    var backLab = ui.from==="node"?NODES[ui.node].l:ui.from==="all"?"Alle Bewerbungen":ui.from==="offers"?"Angebote":ui.from==="firms"?"Mögliche Unternehmen":"Schließen";
+    var backLab = ui.from==="node"?NODES[ui.node].l:ui.from==="next"?"Als Nächstes":ui.from==="all"?"Alle Bewerbungen":ui.from==="offers"?"Angebote":ui.from==="firms"?"Mögliche Unternehmen":"Schließen";
     var h='<div class="job">';
     h+='<div class="dh"><button type="button" class="back" data-act="backFromJob">‹ '+esc(backLab)+'</button><span class="savestate" id="saveState">'+(pending[r.id]||inflight[r.id]?'Speichert …':'Gespeichert')+'</span></div>';
     h+='<div><input class="bare t1" data-k="unternehmen" value="'+esc(r.unternehmen||"")+'" placeholder="Unternehmen"'+ro+'><input class="bare t2" data-k="rolle" value="'+esc(r.rolle||"")+'" placeholder="Rolle, z. B. Junior Controller"'+ro+'></div>';
@@ -753,21 +776,24 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function renderDetail(force){
     var d=$("detail");
     if(!force && ui.mode==="job" && d.contains(document.activeElement) && document.activeElement.matches("input,textarea")) return;
+    $("nextBtn").setAttribute("aria-pressed", String(ui.mode==="next"));
     $("eyeBtn").setAttribute("aria-pressed", String(ui.mode==="all"));
     $("offerBtn").setAttribute("aria-pressed", String(ui.mode==="offers"));
     $("firmBtn").setAttribute("aria-pressed", String(ui.mode==="firms"));
+    /* Eine offene Ansicht verdeckt den Baum */
+    var open=ui.mode!=="none"; d.hidden=!open; $("tree").hidden=open;
     if(!loaded){ d.innerHTML=""; return; }
-    d.innerHTML = ui.mode==="all"?renderAllList():ui.mode==="offers"?renderOffers():ui.mode==="firms"?renderFirms():ui.mode==="node"?renderNodeList():ui.mode==="job"?renderJob():"";
+    d.innerHTML = ui.mode==="next"?renderNext():ui.mode==="all"?renderAllList():ui.mode==="offers"?renderOffers():ui.mode==="firms"?renderFirms():ui.mode==="node"?renderNodeList():ui.mode==="job"?renderJob():"";
   }
   function show(mode, extra){
     flushAll(); ui.confirmDel=false;
     if(mode==="job"){ if(ui.mode!=="job") ui.from=ui.mode; ui.job=extra; }
     else if(mode==="node"){ ui.node=extra; ui.job=null; }
     else ui.job=null;
-    ui.mode=mode; renderTree(); renderDetail(true);
-    if(mode!=="none"){ var d=$("detail"), r=d.getBoundingClientRect(); if(r.top>window.innerHeight-140 && d.scrollIntoView) d.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); }
+    ui.mode=mode; renderDetail(true); renderTree();
+    var tb=document.querySelector(".toolbar"); if(tb && tb.getBoundingClientRect().top<0 && tb.scrollIntoView) tb.scrollIntoView({block:"start"});
   }
-  function goBack(){ var f=ui.from; if(f==="node") show("node",ui.node); else if(f==="all"||f==="offers"||f==="firms") show(f); else show("none"); }
+  function goBack(){ var f=ui.from; if(f==="node") show("node",ui.node); else if(f==="all"||f==="offers"||f==="firms"||f==="next") show(f); else show("none"); }
 
   /* ---------- Eingaben ---------- */
   document.addEventListener("input", function(ev){
@@ -887,6 +913,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     }
     if((ev.metaKey||ev.ctrlKey)&&ev.key==="z"&&!(ev.target.matches&&ev.target.matches("input,textarea"))){ ev.preventDefault(); undo(); }
   });
+  $("nextBtn").addEventListener("click", function(){ show(ui.mode==="next"?"none":"next"); });
   $("eyeBtn").addEventListener("click", function(){ show(ui.mode==="all"?"none":"all"); });
   $("offerBtn").addEventListener("click", function(){ show(ui.mode==="offers"?"none":"offers"); });
   $("firmBtn").addEventListener("click", function(){ show(ui.mode==="firms"?"none":"firms"); if(ui.mode==="firms") loadFirms(); });
