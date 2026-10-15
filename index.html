@@ -142,7 +142,28 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .row .d{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
 .row.offer{grid-template-columns:12px minmax(0,2fr) 96px minmax(0,1.4fr) minmax(0,1fr)}
 .empty-msg{color:var(--muted);font-size:13px;margin:6px 0}
-@media (max-width:640px){ .row,.row.offer{grid-template-columns:12px minmax(0,1fr) minmax(0,1fr)} .row .o,.row .d,.row.offer .zd{display:none} .ctrl .lab{width:auto} }
+/* Mögliche Unternehmen */
+.row.firm{grid-template-columns:30px minmax(0,2fr) minmax(0,1fr) minmax(0,1.8fr) 84px}
+.row.firm .rk{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.row.firm[aria-expanded="true"]{background:var(--soft);border-bottom-color:transparent}
+.row.firm .st small.warn{color:var(--late)}
+.row.firm .art.fst{margin:0 6px 0 0}
+.row.firm .fopen{color:var(--muted)}
+.firmd{list-style:none;border-bottom:1px solid var(--line);background:var(--soft);padding:2px 6px 14px 50px}
+.firmd dl{margin:0;display:grid;grid-template-columns:118px minmax(0,1fr);gap:7px 14px;font-size:13px}
+.firmd dt{color:var(--muted);font-size:12.5px}
+.firmd dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.firmd dd.warn{color:var(--late)}
+.firmd a{color:var(--ink);text-underline-offset:3px}
+.firmd small{color:var(--muted);font-size:12px}
+.fnote{font-size:12.5px;color:var(--muted);margin:0;max-width:880px}
+.fnote b{color:var(--ink2);font-weight:600}
+.fmore{font-size:12.5px;color:var(--muted)}
+.fmore summary{cursor:pointer;width:max-content}
+.fmore summary:hover{color:var(--ink)}
+.fmore ul{margin:6px 0 0;padding-left:18px}
+.fmore li{margin:2px 0}
+@media (max-width:640px){ .row,.row.offer{grid-template-columns:12px minmax(0,1fr) minmax(0,1fr)} .row .o,.row .d,.row.offer .zd{display:none} .ctrl .lab{width:auto} .row.firm{grid-template-columns:24px minmax(0,1fr);row-gap:3px;padding-block:8px} .row.firm .st{grid-column:2} .row.firm .rk{align-self:start;padding-top:1px} .firmd{padding-left:12px} .firmd dl{grid-template-columns:minmax(0,1fr);gap:1px} .firmd dt{margin-top:7px} }
 
 /* Detail */
 .job{display:flex;flex-direction:column;gap:22px}
@@ -236,6 +257,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     <div class="toolbar">
       <button type="button" class="tb" id="eyeBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Alle Bewerbungen</button>
       <button type="button" class="tb" id="offerBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.6L16 9.5"/></svg>Angebote <span class="n" id="offerN"></span></button>
+      <button type="button" class="tb" id="firmBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 9h4a1 1 0 0 1 1 1v11"/><path d="M2.5 21h19"/><path d="M8 8h3M8 12h3M8 16h3"/></svg>Mögliche Unternehmen <span class="n" id="firmN"></span></button>
     </div>
     <div id="detail"></div>
   </div>
@@ -275,8 +297,9 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
 
   var rows=[], loaded=false, col=null, canWrite=true, dbState="pending";
   var pending={}, timers={}, inflight={}, undoStack=[], expanded={}, nextAll=false, treeDirty=false;
-  var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, confirmDel:false};
-  try{ var sv=JSON.parse(localStorage.getItem("bt-ui")||"{}"); if(sv.sort) ui.sort=sv.sort; }catch(e){}
+  var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, confirmDel:false, fsort:"rank", fStufe:{}, fOpen:null};
+  try{ var sv=JSON.parse(localStorage.getItem("bt-ui")||"{}"); if(sv.sort) ui.sort=sv.sort; if(sv.fsort==="alpha") ui.fsort="alpha"; }catch(e){}
+  function saveUi(){ try{ localStorage.setItem("bt-ui",JSON.stringify({sort:ui.sort, fsort:ui.fsort})); }catch(e){} }
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
@@ -551,6 +574,80 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     return h;
   }
 
+  /* ---------- Mögliche Unternehmen (privat in bw-daten/unternehmen.json, nur lesen) ---------- */
+  var firms={state:"idle", list:[], removed:[], abbr:{}, note:"", src:"", stand:"", msg:""};
+  function str(v){ return v==null?"":String(v); }
+  function safeUrl(u){ u=str(u).trim(); return /^https:\/\/[^\s"'<>]+$/.test(u)?u:""; }
+  function cleanFirm(u,i){
+    var o={}; ["id","kurz","name","ort","branche","ma","groesse","typ","warum","einstieg","marke","hinweis","quelle"].forEach(function(k){ o[k]=str(u[k]); }); o.kurz=o.kurz||o.name;
+    o.id=o.id||("f"+i); o.rang=Number(u.rang)||999; o.nr=Number(u.nr)||0;
+    o.stufe=/^[ABC]$/.test(u.stufe)?u.stufe:"–"; o.stufeRecherche=/^[ABC]$/.test(u.stufeRecherche)?u.stufeRecherche:"";
+    o.warnung=u.warnung===true; o.karriere=safeUrl(u.karriere);
+    return o;
+  }
+  function resetFirms(){ firms={state:"idle", list:[], removed:[], abbr:{}, note:"", src:"", stand:"", msg:""}; ui.fOpen=null; var n=$("firmN"); if(n) n.textContent=""; }
+  function loadFirms(force){
+    if(!token()){ firms.state="idle"; if(ui.mode==="firms") renderDetail(true); return; }
+    if(firms.state==="load" || (firms.state==="ok" && !force)) return;
+    var tok=token(); firms.state="load"; if(ui.mode==="firms") renderDetail(true);
+    var url="https://api.github.com/repos/"+OWNER+"/"+REPO+"/contents/unternehmen.json?ref="+BRANCH+"&_="+Date.now();
+    fetch(url, {headers:hdrs(false), cache:"no-store"}).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        if(res.status===401) throw {msg:"Token ungültig oder abgelaufen"};
+        if(res.status===403 && res.headers.get("x-ratelimit-remaining")==="0") throw {msg:"GitHub-Abruflimit erreicht, später erneut"};
+        if(res.status===403||res.status===404) throw {msg:"Kein Zugriff auf bw-daten oder unternehmen.json fehlt"};
+        if(!res.ok) throw {msg:"GitHub-Fehler "+res.status};
+        try{ return JSON.parse(b64dec(body.content)); }catch(e){ throw {msg:"unternehmen.json ist beschädigt"}; }
+      });
+    }, function(){ throw {msg:"Keine Verbindung zu GitHub"}; }).then(function(o){
+      if(token()!==tok) return;
+      var L=(o&&Array.isArray(o.unternehmen))?o.unternehmen:[];
+      firms.list=L.filter(function(u){ return u && typeof u==="object" && str(u.name).trim(); }).map(cleanFirm);
+      firms.removed=(o&&Array.isArray(o.entfernt))?o.entfernt.filter(function(x){ return x&&x.name; }).map(function(x){ return {name:str(x.name), grund:str(x.grund)}; }):[];
+      firms.abbr={}; if(o&&o.abkuerzungen&&typeof o.abkuerzungen==="object") Object.keys(o.abkuerzungen).forEach(function(k){ firms.abbr[k]=str(o.abkuerzungen[k]); });
+      firms.note=str(o&&o.hinweis); firms.src=str(o&&o.quelle); firms.stand=isIso(o&&o.stand)?o.stand:"";
+      firms.state="ok"; $("firmN").textContent=firms.list.length||"";
+      if(ui.mode==="firms") renderDetail(true);
+    }).catch(function(e){ if(token()!==tok) return; firms.state="err"; firms.msg=(e&&e.msg)||"Fehler beim Laden"; if(ui.mode==="firms") renderDetail(true); });
+  }
+  function firmRow(u){
+    var open=ui.fOpen===u.id, sub=[u.branche||"Branche unbekannt", u.typ].filter(Boolean).join(" · ");
+    var h='<li class="row firm" data-act="firm" data-v="'+esc(u.id)+'" tabindex="0" role="button" aria-expanded="'+open+'"><span class="rk">'+esc(u.rang)+'</span><span class="co"><b>'+esc(u.kurz)+'</b><span><span class="art fst">'+esc(u.stufe)+'</span>'+esc(sub)+'</span></span><span class="o">'+esc(u.ort)+'</span><span class="st">'+(u.einstieg?esc(u.einstieg):'<span class="fopen">Einstieg offen</span>')+(u.marke?'<small class="'+(u.warnung?'warn':'')+'">'+esc(u.marke)+'</small>':'')+'</span><span class="d">'+(u.ma?esc(u.ma)+' MA':'')+'</span></li>';
+    if(!open) return h;
+    var link=u.karriere?'<a href="'+esc(u.karriere)+'" target="_blank" rel="noopener noreferrer">'+esc(u.karriere.replace(/^https:\/\//,""))+'</a> <small>Link aus der Recherche</small>':'<small>in der Recherche nicht geprüft oder nicht gefunden</small>';
+    var q=esc(u.quelle)+(u.nr?' <small>· Nr. '+esc(u.nr)+' in der Recherche'+(u.stufeRecherche?', dort Stufe '+esc(u.stufeRecherche):'')+'</small>':'');
+    h+='<li class="firmd"><dl>';
+    if(u.name&&u.name!==u.kurz) h+='<dt>Firmierung</dt><dd>'+esc(u.name)+'</dd>';
+    h+='<dt>Warum passend</dt><dd>'+esc(u.warum||"–")+'</dd>';
+    h+='<dt>Einstieg</dt><dd>'+esc(u.einstieg||"in der Recherche offen")+'</dd>';
+    if(u.hinweis) h+='<dt>Hinweis</dt><dd class="'+(u.warnung?'warn':'')+'">'+esc(u.hinweis)+'</dd>';
+    h+='<dt>Ort</dt><dd>'+esc(u.ort)+'</dd>';
+    h+='<dt>Größe (MA)</dt><dd>'+esc(u.groesse||"–")+'</dd>';
+    h+='<dt>Karriereseite</dt><dd>'+link+'</dd>';
+    h+='<dt>Quelle</dt><dd>'+q+'</dd>';
+    return h+'</dl></li>';
+  }
+  function renderFirms(){
+    var A=firms.list, st={}; A.forEach(function(u){ st[u.stufe]=1; });
+    var fs=on(ui.fStufe), L=A.filter(function(u){ return !fs.length||fs.indexOf(u.stufe)>=0; });
+    L.sort(function(a,b){ if(ui.fsort==="alpha") return a.kurz.localeCompare(b.kurz,"de",{sensitivity:"base"}); return a.rang-b.rang||a.kurz.localeCompare(b.kurz,"de"); });
+    var h='<div class="dh"><p class="crumb">Mögliche Unternehmen<span class="cnt">'+(firms.state==="ok"?L.length+(L.length!==A.length?' von '+A.length:''):'')+'</span></p><button type="button" class="xbtn" data-act="closeDetail" aria-label="Schließen">✕</button></div>';
+    if(!token()) return h+'<p class="empty-msg">Die Liste liegt privat in bw-daten. Trag oben über „Token eintragen“ deinen Token ein, dann erscheint sie hier.</p>';
+    if(firms.state==="err") return h+'<p class="empty-msg">'+esc(firms.msg)+'. <button type="button" class="linkbtn" data-act="firmReload">Erneut laden</button></p>';
+    if(firms.state!=="ok") return h+'<p class="empty-msg">wird geladen …</p>';
+    if(!A.length) return h+'<p class="empty-msg">In unternehmen.json stehen keine Unternehmen.</p>';
+    h+='<div class="ctrl">';
+    h+='<div class="r"><span class="lab">Sortierung</span><span class="seg"><button type="button" data-act="fsort" data-v="rank" aria-pressed="'+(ui.fsort!=="alpha")+'">Rang</button><button type="button" data-act="fsort" data-v="alpha" aria-pressed="'+(ui.fsort==="alpha")+'">A–Z</button></span></div>';
+    h+='<div class="r"><span class="lab">Stufe</span>'+Object.keys(st).sort().map(function(k){ return '<button type="button" class="pill" data-act="fstufe" data-v="'+esc(k)+'" aria-pressed="'+!!ui.fStufe[k]+'">Stufe '+esc(k)+' <span class="nc">'+A.filter(function(u){ return u.stufe===k; }).length+'</span></button>'; }).join("")+'</div>';
+    h+='</div>';
+    if(firms.note||firms.src) h+='<p class="fnote">'+(firms.src?'<b>'+esc(firms.src)+'.</b> ':'')+esc(firms.note)+' Klick auf ein Unternehmen zeigt Begründung, Größe, Karriereseite und Quelle.</p>';
+    h+= L.length ? '<ul class="list">'+L.map(firmRow).join("")+'</ul>' : '<p class="empty-msg">Kein Unternehmen in dieser Stufe.</p>';
+    if(firms.removed.length) h+='<details class="fmore"><summary>Nicht übernommen ('+firms.removed.length+')</summary><ul>'+firms.removed.map(function(x){ return '<li><b>'+esc(x.name)+'</b>'+(x.grund?': '+esc(x.grund):'')+'</li>'; }).join("")+'</ul></details>';
+    var ak=Object.keys(firms.abbr);
+    if(ak.length) h+='<details class="fmore"><summary>Abkürzungen der Quellen</summary><ul>'+ak.map(function(k){ return '<li><b>'+esc(k)+'</b>: '+esc(firms.abbr[k])+'</li>'; }).join("")+'</ul></details>';
+    return h;
+  }
+
   /* ---------- Detail einer Bewerbung ---------- */
   function inp(r,k,type,ph){ return '<input class="bare" data-k="'+k+'"'+(type?' type="'+type+'"':'')+' value="'+esc(r[k]||"")+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+(canWrite?'':' disabled')+'>'; }
   function dateLabel(k){ var c=NODES[k].c; return c==="bew"?"beworben am":TERMIN[c]?"Termin am":c==="z"?"Zusage erhalten am":"Absage erhalten am"; }
@@ -604,8 +701,9 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     if(!force && ui.mode==="job" && d.contains(document.activeElement) && document.activeElement.matches("input,textarea")) return;
     $("eyeBtn").setAttribute("aria-pressed", String(ui.mode==="all"));
     $("offerBtn").setAttribute("aria-pressed", String(ui.mode==="offers"));
+    $("firmBtn").setAttribute("aria-pressed", String(ui.mode==="firms"));
     if(!loaded){ d.innerHTML=""; return; }
-    d.innerHTML = ui.mode==="all"?renderAllList():ui.mode==="offers"?renderOffers():ui.mode==="node"?renderNodeList():ui.mode==="job"?renderJob():"";
+    d.innerHTML = ui.mode==="all"?renderAllList():ui.mode==="offers"?renderOffers():ui.mode==="firms"?renderFirms():ui.mode==="node"?renderNodeList():ui.mode==="job"?renderJob():"";
   }
   function show(mode, extra){
     flushAll(); ui.confirmDel=false;
@@ -703,7 +801,11 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     else if(a==="nextAll"){ nextAll=!nextAll; renderAgenda(); }
     else if(a==="closeDetail") show("none");
     else if(a==="backFromJob") goBack();
-    else if(a==="sort"){ ui.sort=v; try{ localStorage.setItem("bt-ui",JSON.stringify({sort:v})); }catch(e){} renderDetail(true); }
+    else if(a==="sort"){ ui.sort=v; saveUi(); renderDetail(true); }
+    else if(a==="fsort"){ ui.fsort=v==="alpha"?"alpha":"rank"; saveUi(); renderDetail(true); }
+    else if(a==="fstufe"){ ui.fStufe[v]=!ui.fStufe[v]; renderDetail(true); }
+    else if(a==="firm"){ ui.fOpen = ui.fOpen===v ? null : v; renderDetail(true); var fr=$("detail").querySelector('.row.firm[data-v="'+(window.CSS&&CSS.escape?CSS.escape(v):v)+'"]'); if(fr) fr.focus({preventScroll:true}); }
+    else if(a==="firmReload") loadFirms(true);
     else if(a==="fst"){ ui.fSt[v]=!ui.fSt[v]; renderDetail(true); }
     else if(a==="fart"){ ui.fArt[v]=!ui.fArt[v]; renderDetail(true); }
     else if(a==="fort"){ ui.fOrt[v]=!ui.fOrt[v]; renderDetail(true); }
@@ -721,12 +823,13 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       var t=ev.target; if(!t.matches) return;
       if(t.matches(".ent")){ ev.preventDefault(); show("job", t.getAttribute("data-job")); }
       else if(t.matches("[data-open-job]")){ ev.preventDefault(); show("job", t.getAttribute("data-open-job")); }
-      else if(t.matches("[data-open-node]")){ ev.preventDefault(); t.click(); }
+      else if(t.matches("[data-open-node]")||t.matches(".row.firm")){ ev.preventDefault(); t.click(); }
     }
     if((ev.metaKey||ev.ctrlKey)&&ev.key==="z"&&!(ev.target.matches&&ev.target.matches("input,textarea"))){ ev.preventDefault(); undo(); }
   });
   $("eyeBtn").addEventListener("click", function(){ show(ui.mode==="all"?"none":"all"); });
   $("offerBtn").addEventListener("click", function(){ show(ui.mode==="offers"?"none":"offers"); });
+  $("firmBtn").addEventListener("click", function(){ show(ui.mode==="firms"?"none":"firms"); if(ui.mode==="firms") loadFirms(); });
   $("undoBtn").addEventListener("click", undo);
   $("addBtn").addEventListener("click", addNew);
   var lastW=0;
@@ -939,12 +1042,12 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       var v=($("tokenInput").value||"").trim();
       if(!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(v)){ toast("Das sieht nicht nach einem GitHub-Token aus (beginnt mit github_pat_)."); return; }
       try{ localStorage.setItem(TKEY,v); }catch(e){ toast("Token konnte nicht gespeichert werden."); return; }
-      $("tokenInput").value=""; toast("Token gespeichert"); readCache(); emit(); refresh(); renderSettings();
+      $("tokenInput").value=""; toast("Token gespeichert"); resetFirms(); readCache(); emit(); refresh(); renderSettings(); if(ui.mode==="firms") loadFirms();
     }
     else if(a==="tokDel" && DIRTY){ tokDelArmed=true; renderSettings(); }
     else if(a==="tokDel"||a==="tokDelYes"){
       tokDelArmed=false; clearTimeout(sync.timer);
-      clearCache(); try{ localStorage.removeItem(TKEY); }catch(e){}
+      clearCache(); resetFirms(); try{ localStorage.removeItem(TKEY); }catch(e){}
       undoStack.length=0; show("none"); emit(); setSync("locked"); renderSettings(); toast("Token und lokale Daten auf diesem Gerät entfernt");
     }
     else if(a==="syncNow"){ if(DIRTY) pushNow(); else refresh(); }
@@ -1003,7 +1106,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   });
 
   /* Abgleich bei Rückkehr, Netz wieder da, Tabwechsel, Schließen */
-  window.addEventListener("storage", function(ev){ if(ev.key===KEY){ readCache(); emit(); } if(ev.key===TKEY){ readCache(); emit(); refresh(); renderSync(); } });
+  window.addEventListener("storage", function(ev){ if(ev.key===KEY){ readCache(); emit(); } if(ev.key===TKEY){ resetFirms(); readCache(); emit(); refresh(); renderSync(); if(ui.mode==="firms") loadFirms(); } });
   window.addEventListener("online", function(){ if(DIRTY) pushNow(); else refresh(); });
   window.addEventListener("offline", function(){ setSync("offline"); });
   document.addEventListener("visibilitychange", function(){
