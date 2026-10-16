@@ -80,8 +80,10 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .nl{font-size:13.5px;font-weight:600;white-space:nowrap}
 .nc{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 .nb.empty .nl{color:var(--muted);font-weight:500}
-.ents{display:flex;flex-direction:column;gap:6px;margin:4px 0 0 12px;padding:2px;max-height:238px;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;overscroll-behavior:contain}
+.ents{display:flex;flex-direction:column;gap:6px;margin:4px 0 0 12px;padding:2px;max-height:208px;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;overscroll-behavior:contain}
 .ents.always{overflow-y:scroll}
+/* Stufen im Pfad: eine Karte sichtbar, weitere über die Scrollleiste */
+.ents.one{max-height:68px}
 /* Scrollleiste immer sichtbar (auch bei ausblendenden Leisten in Edge und macOS) */
 .ents::-webkit-scrollbar{width:8px}
 .ents::-webkit-scrollbar-track{background:var(--soft);border-radius:8px}
@@ -90,7 +92,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 @supports (-moz-appearance:none){ .ents{scrollbar-width:thin;scrollbar-color:#B6BCC6 var(--soft)} }
 /* Auf dem Handy darf das Wischen am Ende eines Kastens die Seite weiterschieben */
 @media (pointer:coarse){ .ents{overscroll-behavior:auto} }
-.ent{position:relative;height:74px;display:flex;flex-direction:column;justify-content:flex-start;gap:1px;padding:8px 10px 6px 12px;border:1px solid var(--line2);border-radius:9px;background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x pan-y;min-width:0}
+.ent{position:relative;height:64px;display:flex;flex-direction:column;justify-content:flex-start;gap:1px;padding:4px 10px 4px 12px;border:1px solid var(--line2);border-radius:9px;background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x pan-y;min-width:0}
 .ent:hover{border-color:var(--c);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .ent.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .ent.soon{border-color:var(--c);box-shadow:0 0 0 1.5px var(--c),0 2px 10px color-mix(in srgb,var(--c) 30%,transparent)}
@@ -98,7 +100,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .grip{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:4px;height:18px;background:radial-gradient(circle,var(--line2) 1px,transparent 1.4px) 0 0/4px 4px;opacity:.9}
 .en{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
 .er{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.art{font-family:var(--font);font-size:11.5px;font-weight:600;letter-spacing:.01em;color:var(--ink2);background:var(--hover);border-radius:5px;padding:2px 6px;margin-left:5px;line-height:1.3;white-space:nowrap}
+.art{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.01em;color:var(--ink2);background:var(--hover);border-radius:5px;padding:1.5px 5px;margin-left:5px;line-height:1.25;white-space:nowrap}
 /* Farben je Art: Hintergrund, Schrift, Rand, Punkt */
 .k-vz{--kb:#F7E6EA;--kt:#6E1230;--kl:#D9A3B3;--kd:#800020}
 .k-tz{--kb:#EEF2F6;--kt:#283548;--kl:#B9C3D1;--kd:#475569}
@@ -115,8 +117,8 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .chip:not([class*="k-"])[aria-pressed="true"]::before{background:#fff}
 .chip:disabled{opacity:.5;cursor:not-allowed}
 /* Kennzeichen unten rechts untereinander: der Name darüber hat die volle Breite */
-.ent.hasb .er,.ent.hasb .es,.ent.hasb .need{margin-right:50px}
-.ent .bdg{position:absolute;right:8px;bottom:6px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.ent.hasb .er,.ent.hasb .es,.ent.hasb .need{margin-right:46px}
+.ent .bdg{position:absolute;right:7px;bottom:5px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 .ent .bdg .art{margin-left:0}
 .dot.rb{background:conic-gradient(var(--c-bew) 0 25%,var(--c-t) 0 50%,var(--c-g) 0 75%,var(--c-g2) 0)}
 .ents > .ent{flex:none}
@@ -136,9 +138,10 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .es.late{color:var(--late);font-weight:500}
 .es.ok{color:var(--c-z);font-weight:600}
 .es .b{display:inline-block;font-weight:600;color:#fff;background:var(--c);border-radius:5px;padding:0 6px}
-.need{display:flex;align-items:center;gap:6px;height:22px;margin-top:2px;padding:0 4px 0 7px;border:1px dashed var(--c);border-radius:6px;background:color-mix(in srgb,var(--c) 9%,#fff);cursor:text}
-.need span{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap}
-.need input{border:0;background:transparent;font-family:var(--mono);font-size:11.5px;padding:0;min-width:0;flex:1;outline:none;color:var(--ink)}
+.need{display:flex;align-items:center;gap:6px;height:21px;margin-top:1px;padding:0 4px 0 7px;border:1px dashed var(--c);border-radius:6px;background:color-mix(in srgb,var(--c) 9%,#fff);cursor:text}
+.need span{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap;flex:0 1 auto;overflow:hidden}
+.need{overflow:hidden;min-width:0}
+.need input{border:0;background:transparent;font-family:var(--mono);font-size:11px;padding:0;min-width:0;width:0;flex:1 1 0;outline:none;color:var(--ink)}
 .c-bew .need{border-color:var(--c-prep);background:#FFFBEB}
 .ghostchip{position:fixed;z-index:50;pointer-events:none;padding:8px 12px;border-radius:9px;background:var(--bg);border:1px solid var(--ink);box-shadow:0 12px 30px rgba(0,0,0,.18);font-size:13px;font-weight:600;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translate(-18px,-18px) rotate(-1.5deg)}
 
@@ -156,7 +159,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .tb svg{width:18px;height:18px}
 .tb .n{font-family:var(--mono);font-size:12px;opacity:.75}
 .dh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
-.dh.jobh{justify-content:flex-end;gap:12px;margin:-6px -6px 0 0}
+.dh.jobh{justify-content:flex-end;gap:12px;margin:-6px 0 0 0}
 .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:600;margin:0}
 .crumb .sep{color:var(--line2);font-weight:400}
 .crumb .cnt{font-family:var(--mono);font-weight:400;font-size:12.5px;color:var(--muted);margin-left:4px}
@@ -388,29 +391,30 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     if(p==="prep"){
       if(r.schrittDatum){ N=days(t,r.schrittDatum); return {txt:(r.schritt||"Aufgabe")+" bis "+fmtS(r.schrittDatum), lvl:N<0?"late":N<=3?"soon":"muted", g:N<0?2:N<=3?0:3, v:N}; }
       if(r.schritt) return {txt:r.schritt, lvl:"muted", g:5, v:0};
-      var A=angelegt(r); return {txt:A==null?"noch nicht beworben":A===0?"angelegt heute":A===1?"angelegt gestern":"angelegt vor "+A+" Tagen", lvl:"muted", g:5, v:A==null?0:-A};
+      var A=angelegt(r), w=A==null?"":A===0?"heute":A===1?"gestern":"vor "+A+" Tagen";
+      return {txt:A==null?"noch nicht beworben":"angelegt "+w, alt:A==null?[]:A>1?[w,A+" Tage"]:[w], lvl:"muted", g:5, v:A==null?0:-A};
     }
     if(n.c==="bew"){
       d=dateOf(r,"B"); if(!d) return {need:{k:"B",label:"Beworben am"}, g:1, v:0};
-      N=days(d,t); return {txt:"wartet seit "+tage(Math.max(N,0)), lvl:N>=14?"late":"muted", g:4, v:-N};
+      N=Math.max(days(d,t),0); return {txt:"wartet seit "+tage(N), alt:N===0?["seit heute","heute"]:["seit "+tage(N), N===1?"1 Tag":N+" Tage"], lvl:N>=14?"late":"muted", g:4, v:-N};
     }
     if(TERMIN[n.c]){
       d=dateOf(r,p); if(!d) return {need:{k:p,label:"Termin am"}, g:1, v:0};
       N=days(t,d);
-      if(N>3) return {txt:fmtS(d)+" · "+rel(N), lvl:"muted", g:3, v:N};
+      if(N>3) return {txt:fmtS(d)+" · "+rel(N), alt:[fmtS(d)], lvl:"muted", g:3, v:N};
       if(N>=0) return {txt:fmtS(d), badge:rel(N), lvl:"soon", g:0, v:N};
-      return {txt:"war "+fmtS(d)+" · Ergebnis offen", lvl:-N>=7?"late":"muted", g:2, v:N};
+      return {txt:"war "+fmtS(d)+" · Ergebnis offen", alt:[fmtS(d)+" · Ergebnis offen", fmtS(d)+" · offen"], lvl:-N>=7?"late":"muted", g:2, v:N};
     }
     if(n.c==="z"){
       if(r.entscheidung==="angenommen") return {txt:"Angebot angenommen", lvl:"ok", g:5, v:0};
       if(r.entscheidung==="abgelehnt") return {txt:"Angebot von dir abgelehnt", lvl:"muted", g:6, v:0};
       if(!r.frist) return {need:{k:"frist",label:"Antwort bis"}, g:1, v:0};
       N=days(t,r.frist);
-      if(N<0) return {txt:"Frist "+fmtS(r.frist)+" abgelaufen", lvl:"late", g:2, v:N};
+      if(N<0) return {txt:"Frist "+fmtS(r.frist)+" abgelaufen", alt:[fmtS(r.frist)+" abgelaufen"], lvl:"late", g:2, v:N};
       if(N<=3) return {txt:"Antwort "+fmtS(r.frist), badge:rel(N), lvl:"soon", g:0, v:N};
-      return {txt:"Antwort bis "+fmtS(r.frist), lvl:"muted", g:3, v:N};
+      return {txt:"Antwort bis "+fmtS(r.frist), alt:["bis "+fmtS(r.frist)], lvl:"muted", g:3, v:N};
     }
-    d=dateOf(r,p); return {txt:"Absage"+(d?" am "+fmtS(d):""), lvl:"muted", g:7, v:-(d?Date.parse(d):0)};
+    d=dateOf(r,p); return {txt:"Absage"+(d?" am "+fmtS(d):""), alt:d?[fmtS(d)]:[], lvl:"muted", g:7, v:-(d?Date.parse(d):0)};
   }
   function prioSort(a,b){ var x=info(a), y=info(b); if(x.g!==y.g) return x.g-y.g; if(x.v!==y.v) return x.v-y.v; return (a.unternehmen||"").localeCompare(b.unternehmen||"","de"); }
   function rank(r){ var p=pfad(r), c=NODES[p].c; if(c==="z") return 100+depth(p); if(c==="a") return -100+depth(p); if(p==="prep") return -1; return depth(p)+(c==="g2"?.5:0); }
@@ -508,20 +512,23 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
 
   /* ---------- Baum ---------- */
   /* Jeder Kasten zeigt höchstens 3 Karten, darunter wird gescrollt. In Bearbeitung steht senkrecht über Bewerbung. */
-  var MAXS=3, HEAD=26, ENT=74, EGAP=6, GAP=10;
+  var HEAD=26, ENT=64, EGAP=6, GAP=10;
+  /* In Bearbeitung und Bewerbung zeigen 3 Karten, jede Stufe im Pfad 1 Karte; weitere über die Scrollleiste */
+  function capOf(k){ return k==="prep"||k==="B" ? 3 : 1; }
   function isFold(k){ return !!ui.fold[k]; }
   /* größere Lücke zwischen den Ästen Gespräch und Test */
   function gapBefore(k,c){ return (k==="B"&&c==="B.T") ? GAP+26 : GAP; }
   function groups(){ var g={}; ORDER.forEach(function(k){ g[k]=[]; }); all().forEach(function(r){ g[pfad(r)].push(r); }); Object.keys(g).forEach(function(k){ g[k].sort(prioSort); }); return g; }
   function entsH(s){ return s ? s*ENT+(s-1)*EGAP+4 : 0; }
-  function boxH(n,k){ var s=isFold(k)?0:Math.min(n,MAXS); return HEAD + (s?4+entsH(s):0) + 6; }
+  function boxH(n,k){ var s=isFold(k)?0:Math.min(n,capOf(k)); return HEAD + (s?4+entsH(s):0) + 6; }
   function statusHtml(r){
     var i=info(r);
     if(i.need){
       var val = i.need.k==="frist" ? (r.frist||"") : dateOf(r,i.need.k);
-      return '<label class="need" title="'+esc(i.need.label)+' eintragen"><span>'+esc(i.need.label)+'</span><input type="date" data-tfield="'+esc(i.need.k)+'" data-job="'+esc(r.id)+'" value="'+esc(val)+'"'+(canWrite?'':' disabled')+'></label>';
+      var sh=i.need.label.replace(/^.*\s(am|bis)$/,"$1");
+      return '<label class="need" title="'+esc(i.need.label)+' eintragen"><span data-alt="'+esc(i.need.label+'|'+sh+'|')+'">'+esc(i.need.label)+'</span><input type="date" data-tfield="'+esc(i.need.k)+'" data-job="'+esc(r.id)+'" value="'+esc(val)+'"'+(canWrite?'':' disabled')+'></label>';
     }
-    return '<span class="es '+(i.lvl||"")+'">'+(i.badge?'<span class="b">'+esc(i.badge)+'</span> ':'')+esc(i.txt)+'</span>';
+    return '<span class="es '+(i.lvl||"")+'"'+(i.alt&&i.alt.length&&!i.badge?' data-alt="'+esc([i.txt].concat(i.alt).join("|"))+'"':'')+'>'+(i.badge?'<span class="b">'+esc(i.badge)+'</span> ':'')+esc(i.txt)+'</span>';
   }
   function entHtml(r){
     var i=info(r), bd=artHtml(r), nm=r.unternehmen||"Ohne Namen", rl=role(r);
@@ -534,8 +541,8 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     /* Pfeil hinter der Zahl klappt die Karten ganz zu */
     if(c) h+='<button type="button" class="fbtn" data-act="fold" data-key="'+k+'" aria-expanded="'+!fold+'" title="'+(fold?'Stellen aufklappen':'Stellen zuklappen')+'" aria-label="'+esc(n.l)+': '+(fold?'Stellen aufklappen':'Stellen zuklappen')+'">'+(fold?'↓':'↑')+'</button>';
     h+='</div>';
-    /* In Bearbeitung und Bewerbung zeigen die Scrollleiste immer, die anderen ab der vierten Karte */
-    if(c&&!fold) h+='<div class="ents'+(always?' always':'')+'">'+list.map(entHtml).join("")+'</div>';
+    /* In Bearbeitung und Bewerbung zeigen die Scrollleiste immer, die Stufen ab der zweiten Karte */
+    if(c&&!fold) h+='<div class="ents'+(always?' always':' one')+'">'+list.map(entHtml).join("")+'</div>';
     return h+'</div>';
   }
 
@@ -545,7 +552,8 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   var RABK=[[/\bJunior\b/g,"Jr."],[/\bCorporate\b/g,"Corp."],[/\bManagement\b/g,"Mgmt."],[/\bKaufmännische[rs]?\b/g,"Kaufm."],[/\bMitarbeiter(in)?\b/g,"Mitarb."]];
   function tidy(s){ return s.replace(/\s{2,}/g," ").replace(/\(\s*\)/g,"").trim(); }
   function nameCands(full){
-    var out=[full], a=tidy(full.replace(LEGAL,"")); out.push(a);
+    /* Die Rechtsform steht nie auf der Karte, nur im Eintrag */
+    var a=tidy(full.replace(LEGAL,""))||full, out=[a];
     var b=a; ABK.forEach(function(x){ b=b.replace(x[0],x[1]); }); b=tidy(b); out.push(b);
     var c=tidy(b.replace(/\s*\([^)]*\)/g,"")); out.push(c);
     var w=c.split(" ");
@@ -566,8 +574,18 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       for(var i=0;i<cs.length;i++){ el.textContent=cs[i]; if(fits(el)){ pick=cs[i]; break; } }
       el.textContent=pick; (seen[pick]=seen[pick]||{})[full]=el;
     });
-    /* Zwei verschiedene Firmen dürfen nicht gleich abgekürzt werden: dann voller Name mit … */
-    Object.keys(seen).forEach(function(k){ var f=Object.keys(seen[k]); if(f.length>1) f.forEach(function(x){ seen[k][x].textContent=x; }); });
+    /* Zwei verschiedene Firmen dürfen nicht gleich abgekürzt werden: dann Name ohne Rechtsform mit … */
+    Object.keys(seen).forEach(function(k){ var f=Object.keys(seen[k]); if(f.length>1) f.forEach(function(x){ seen[k][x].textContent=nameCands(x)[0]; }); });
+    /* Fehlendes Datum: Beschriftung kürzen („Termin am“ zu „am“), damit das Datumsfeld Platz hat */
+    host.querySelectorAll(".ent .need > span[data-alt]").forEach(function(el){
+      var cs=el.getAttribute("data-alt").split("|"), inp=el.parentNode.querySelector("input");
+      for(var i=0;i<cs.length;i++){ el.textContent=cs[i]; if(el.scrollWidth<=el.clientWidth+1 && (!inp || inp.offsetWidth>=96)) return; }
+    });
+    /* Letzte Zeile: kürzere Fassung, solange Zahl und Tage stehen bleiben */
+    host.querySelectorAll(".ent .es[data-alt]").forEach(function(el){
+      var cs=el.getAttribute("data-alt").split("|");
+      for(var i=0;i<cs.length;i++){ el.textContent=cs[i]; if(fits(el)) return; }
+    });
     host.querySelectorAll(".ent .rt[data-full]").forEach(function(el){
       var cs=roleCands(el.getAttribute("data-full")||""); if(!cs[0]) return;
       for(var i=0;i<cs.length;i++){ el.textContent=cs[i]; if(fits(el)) return; }
@@ -605,27 +623,21 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       Y.prep=0; Y.B=Math.max(Y.B, H.prep+PG);
       return Math.max(SUB.B, Y.B+H.B);
     }
-    /* Höhe: Der ganze Baum soll ohne Scrollen sichtbar sein und höchstens dort enden, wo bei voller Höhe
-       die Absage unter „Gespräch“ nach dem Test stünde. Erst werden die Abstände kleiner (bis 6 px),
-       reicht das nicht, wird der ganze Baum gleichmäßig verkleinert (bis 70 %). */
-    var top0=host.getBoundingClientRect().top+(window.scrollY||0), avail=window.innerHeight-top0-28;
-    var t1=layout(10), t2=layout(20), slope=(t2-t1)/10, total, sc=1;
-    function gFor(target){ return slope>0 ? Math.max(6,Math.min(56,10+(target-t1)/slope)) : 10; }
-    layout(gFor(avail));
-    var target=Math.min(avail, Y["B.T.A"]+H["B.T.A"]), t6=layout(6);
-    if(phone || t6<=target) total=layout(gFor(target));
-    else { total=t6; sc=Math.max(.7, target/t6); }
-    SCALE=sc;
-    /* Breite: letzte Spalte endet am rechten Rand (wie „Neue Bewerbung“). Unter 1100 px (Handy) ist der Baum 1280 px breit und lässt sich seitlich schieben.
-       Bei Verkleinerung wird breiter gerechnet, damit der Baum trotzdem die ganze Breite nutzt. */
-    var W=phone?1280:Math.floor(VW/sc);
+    /* Höhe: Die Abstände wachsen, bis der Baum die Fensterhöhe füllt (höchstens 56 px, mindestens 6 px).
+       Der Baum wird nie verkleinert; passt er auch mit 6 px nicht, lässt sich die Seite etwas scrollen. */
+    var top0=host.getBoundingClientRect().top+(window.scrollY||0), avail=window.innerHeight-top0-24, total, lo=6, hi=56;
+    if(layout(hi)<=avail) lo=hi; else if(layout(lo)<=avail){ for(var it=0; it<18; it++){ var mid=(lo+hi)/2; if(layout(mid)<=avail) lo=mid; else hi=mid; } }
+    total=layout(lo);
+    SCALE=1;
+    /* Breite: letzte Spalte endet am rechten Rand (wie „Neue Bewerbung“). Unter 1100 px (Handy) ist der Baum 1280 px breit und lässt sich seitlich schieben. */
+    var W=phone?1280:VW;
     /* Spalte 1 (In Bearbeitung, Bewerbung) und 2 sind breiter, weil dort die meisten Karten stehen.
        Die letzte Spalte ist nur so breit wie ihre Beschriftung, solange dort keine Karte liegt: dann endet der Pfad am rechten Rand. */
     var CG=Math.round(Math.min(72,Math.max(48,W*.045))), last4=ORDER.some(function(k){ return depth(k)===4 && G[k].length; });
     var WT=last4?[1.3,1.1,1,1,.85]:[1.3,1.1,1,1], u=(W-4*CG-(last4?0:88))/(last4?5.25:4.4), CW=[], CX=[], acc=0;
     WT.forEach(function(f,i){ CW[i]=Math.floor(u*f); }); if(!last4) CW[4]=88;
     CW.forEach(function(w,i){ CX[i]=acc; acc+=w+CG; });
-    var html='<div class="tsizer" style="width:'+Math.floor(W*sc)+'px;height:'+Math.ceil((total+8)*sc)+'px"><div class="tcanvas" style="width:'+W+'px;height:'+(total+8)+'px'+(sc<1?';transform:scale('+sc+');transform-origin:0 0':'')+'"><svg id="wires"></svg>';
+    var html='<div class="tsizer" style="width:'+W+'px;height:'+(total+8)+'px"><div class="tcanvas" style="width:'+W+'px;height:'+(total+8)+'px"><svg id="wires"></svg>';
     ORDER.forEach(function(k){ var d=depth(k); html+=nodeHtml(k,G,'left:'+(CX[d]+8)+'px;top:'+(Y[k]+6)+'px;width:'+CW[d]+'px'); });
     host.innerHTML=html+'</div></div>';
     fitCards(host);
@@ -683,7 +695,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var A=all(), arts={}, orte={};
     A.forEach(function(r){ arts[r.art||"–"]=1; orte[r.ort||"–"]=1; });
     var L=sortList(filtered(A));
-    var h='<div class="dh"><p class="crumb">Alle Bewerbungen<span class="cnt">'+L.length+(L.length!==A.length?' von '+A.length:'')+'</span></p>'+(on(ui.fSt).length||on(ui.fArt).length||on(ui.fOrt).length||on(ui.fAs).length?'<button type="button" class="linkbtn" data-act="clearF">Filter zurücksetzen</button>':'')+'</div>';
+    var h='<div class="dh"><p class="crumb">Alle Bewerbungen<span class="cnt">'+L.length+(L.length!==A.length?' von '+A.length:'')+'</span></p>'+(on(ui.fSt).length||on(ui.fArt).length||on(ui.fOrt).length||on(ui.fAs).length?'<button type="button" class="linkbtn" data-act="clearF">Filter zurücksetzen</button>':'')+'<button type="button" class="xbtn" data-act="closeDetail" aria-label="Schließen" style="margin-left:auto">✕</button></div>';
     h+='<div class="ctrl">';
     h+='<div class="r"><span class="lab">Sortierung</span><span class="seg"><button type="button" data-act="sort" data-v="progress" aria-pressed="'+(ui.sort==="progress")+'">Fortschritt</button><button type="button" data-act="sort" data-v="alpha" aria-pressed="'+(ui.sort==="alpha")+'">A–Z</button></span></div>';
     h+='<div class="r"><span class="lab">Stufe</span>'+STUFEN.map(function(s){ return '<button type="button" class="pill c-'+s[0]+'" data-act="fst" data-v="'+s[0]+'" aria-pressed="'+!!ui.fSt[s[0]]+'"><span class="dot"></span>'+esc(s[1])+'</button>'; }).join("")+'</div>';
