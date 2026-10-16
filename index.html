@@ -80,8 +80,17 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .nl{font-size:13.5px;font-weight:600;white-space:nowrap}
 .nc{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 .nb.empty .nl{color:var(--muted);font-weight:500}
-.ents{display:flex;flex-direction:column;gap:6px;margin:6px 0 0 14px}
-.ent{position:relative;height:70px;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:6px 10px 6px 12px;border:1px solid var(--line2);border-radius:9px;background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x pan-y;min-width:0}
+.ents{display:flex;flex-direction:column;gap:6px;margin:4px 0 0 12px;padding:2px;max-height:238px;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;overscroll-behavior:contain}
+.ents.always{overflow-y:scroll}
+/* Scrollleiste immer sichtbar (auch bei ausblendenden Leisten in Edge und macOS) */
+.ents::-webkit-scrollbar{width:8px}
+.ents::-webkit-scrollbar-track{background:var(--soft);border-radius:8px}
+.ents::-webkit-scrollbar-thumb{background:#B6BCC6;border-radius:8px;border:2px solid var(--soft)}
+.ents::-webkit-scrollbar-thumb:hover{background:#9AA1AC}
+@supports (-moz-appearance:none){ .ents{scrollbar-width:thin;scrollbar-color:#B6BCC6 var(--soft)} }
+/* Auf dem Handy darf das Wischen am Ende eines Kastens die Seite weiterschieben */
+@media (pointer:coarse){ .ents{overscroll-behavior:auto} }
+.ent{position:relative;height:74px;display:flex;flex-direction:column;justify-content:flex-start;gap:1px;padding:8px 10px 6px 12px;border:1px solid var(--line2);border-radius:9px;background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x pan-y;min-width:0}
 .ent:hover{border-color:var(--c);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .ent.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .ent.soon{border-color:var(--c);box-shadow:0 0 0 1.5px var(--c),0 2px 10px color-mix(in srgb,var(--c) 30%,transparent)}
@@ -89,41 +98,34 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .grip{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:4px;height:18px;background:radial-gradient(circle,var(--line2) 1px,transparent 1.4px) 0 0/4px 4px;opacity:.9}
 .en{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
 .er{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.art{font-family:var(--font);font-size:10.5px;font-weight:600;letter-spacing:.01em;color:var(--ink2);background:var(--hover);border-radius:4px;padding:1px 5px;margin-left:5px;line-height:1.35;white-space:nowrap}
+.art{font-family:var(--font);font-size:11.5px;font-weight:600;letter-spacing:.01em;color:var(--ink2);background:var(--hover);border-radius:5px;padding:2px 6px;margin-left:5px;line-height:1.3;white-space:nowrap}
 /* Farben je Art: Hintergrund, Schrift, Rand, Punkt */
-.k-vz{--kb:#EEF2F6;--kt:#334155;--kl:#C3CCD8;--kd:#475569}
-.k-tz{--kb:#F7E6EA;--kt:#6E1230;--kl:#DFAFBD;--kd:#800020}
-.k-tr{--kb:#F0EBFD;--kt:#4C1D95;--kl:#CDBDF5;--kd:#7C3AED}
-.k-pr{--kb:#FBE8F8;--kt:#86198F;--kl:#EDB6E6;--kd:#C026D3}
-.k-lb{--kb:#F5EBDF;--kt:#5C3A1A;--kl:#DCC3A6;--kd:#8B5A2B}
-.k-cv{--kb:#6B4423;--kt:#FFFFFF;--kl:#6B4423;--kd:#6B4423}
+.k-vz{--kb:#F7E6EA;--kt:#6E1230;--kl:#D9A3B3;--kd:#800020}
+.k-tz{--kb:#EEF2F6;--kt:#283548;--kl:#B9C3D1;--kd:#475569}
+.k-tr{--kb:#F0EBFD;--kt:#4C1D95;--kl:#C4B2F3;--kd:#7C3AED}
+.k-pr{--kb:#FBE8F8;--kt:#7E1683;--kl:#E6A8DE;--kd:#C026D3}
+.k-lb{--kb:#F5EBDF;--kt:#55361A;--kl:#D8BC9C;--kd:#8B5A2B}
+.k-cv{--kb:#EBD8C1;--kt:#45260C;--kl:#BF9A70;--kd:#6B4423}
 .art[class*="k-"]{background:var(--kb);color:var(--kt);box-shadow:inset 0 0 0 1px var(--kl)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{height:30px;padding:0 12px;border-radius:8px;border:0;background:#fff;box-shadow:inset 0 0 0 1px var(--line2);font-size:12.5px;font-weight:500;color:var(--ink2);display:inline-flex;align-items:center;gap:7px}
 .chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--kd,var(--line2));flex:none}
 .chip:hover:not(:disabled){background:var(--soft)}
 .chip[aria-pressed="true"]{background:var(--kb,var(--ink));color:var(--kt,#fff);box-shadow:inset 0 0 0 1.5px var(--kd,var(--ink));font-weight:600}
-.chip.k-cv[aria-pressed="true"]::before,.chip:not([class*="k-"])[aria-pressed="true"]::before{background:#fff}
+.chip:not([class*="k-"])[aria-pressed="true"]::before{background:#fff}
 .chip:disabled{opacity:.5;cursor:not-allowed}
-.ent.hasb{padding-right:62px}
-.ent .bdg{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+/* Kennzeichen unten rechts untereinander: der Name darüber hat die volle Breite */
+.ent.hasb .er,.ent.hasb .es,.ent.hasb .need{margin-right:50px}
+.ent .bdg{position:absolute;right:8px;bottom:6px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 .ent .bdg .art{margin-left:0}
 .dot.rb{background:conic-gradient(var(--c-bew) 0 25%,var(--c-t) 0 50%,var(--c-g) 0 75%,var(--c-g2) 0)}
-.nb.hrow .ents{flex-direction:row;flex-wrap:nowrap;gap:8px;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;scrollbar-width:thin}
-.nb.hrow .ent{width:var(--ew);flex:none}
 .ents > .ent{flex:none}
-.nb .ents.scroll{max-height:298px;overflow-y:auto;padding-right:4px;scrollbar-width:thin;overscroll-behavior:contain}
 .tcanvas{position:relative}
 .nhrow{display:flex;align-items:center;gap:0;min-width:0}
 .nhrow > .nh{min-width:0}
 .fbtn{flex:none;width:24px;height:24px;margin-left:-2px;padding:0;border:0;border-radius:6px;background:none;color:var(--muted);font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .fbtn:hover{background:var(--hover);color:var(--ink)}
 .nb.fold .nl{color:var(--ink2)}
-.mtile{flex:none;height:70px;padding:0 12px;border:1px dashed var(--line2);border-radius:9px;background:var(--soft);color:var(--ink2);font-size:12.5px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer}
-.mtile b{font-family:var(--mono);font-weight:600;color:var(--c)}
-.mtile:hover{border-color:var(--c);color:var(--ink);background:color-mix(in srgb,var(--c) 8%,#fff)}
-.mtile.less{color:var(--muted)}
-.nb.hrow .mtile{width:120px}
 .tb .n.warn{color:var(--late);opacity:1;font-weight:600}
 .tb[aria-pressed="true"] .n.warn{color:#FDBA74}
 .pill.zero{opacity:.5}
@@ -153,6 +155,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .tb svg{width:18px;height:18px}
 .tb .n{font-family:var(--mono);font-size:12px;opacity:.75}
 .dh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.dh.jobh{justify-content:flex-end;gap:12px;margin:-6px -6px 0 0}
 .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:600;margin:0}
 .crumb .sep{color:var(--line2);font-weight:400}
 .crumb .cnt{font-family:var(--mono);font-weight:400;font-size:12.5px;color:var(--muted);margin-left:4px}
@@ -342,7 +345,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function chainLabel(id){ return chain(id).map(function(k){ return NODES[k].l; }).join(" → "); }
 
   var rows=[], loaded=false, col=null, canWrite=true, dbState="pending";
-  var pending={}, timers={}, inflight={}, undoStack=[], expanded={}, nextAll=false, treeDirty=false;
+  var pending={}, timers={}, inflight={}, undoStack=[], nextAll=false, treeDirty=false;
   var ui={mode:"none", node:null, job:null, from:null, sort:"progress", fSt:{}, fArt:{}, fOrt:{}, fAs:{}, confirmDel:false, fsort:"rank", fStufe:{}, fTr:{}, fOpen:null, fMore:null, fold:{}};
   try{ var sv=JSON.parse(localStorage.getItem("bt-ui")||"{}"); if(sv.sort) ui.sort=sv.sort; if(sv.fsort==="alpha") ui.fsort="alpha"; if(sv.fold&&typeof sv.fold==="object") Object.keys(sv.fold).forEach(function(k){ if(/^(prep|B(\.[A-Z0-9]+)*)$/.test(k)&&sv.fold[k]===true) ui.fold[k]=true; }); }catch(e){}
   function saveUi(){ try{ localStorage.setItem("bt-ui",JSON.stringify({sort:ui.sort, fsort:ui.fsort, fold:ui.fold})); }catch(e){} }
@@ -354,7 +357,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function fmt(iso){ if(!isIso(iso)) return ""; var p=iso.split("-"); return p[2]+"."+p[1]+"."+p[0]; }
   function fmtS(iso){ if(!isIso(iso)) return ""; var p=iso.split("-"); return p[2]+"."+p[1]+"."; }
   function days(a,b){ if(!isIso(a)||!isIso(b)) return null; return Math.round((Date.parse(b+"T12:00:00Z")-Date.parse(a+"T12:00:00Z"))/864e5); }
-  function tage(n){ return n===1?"1 Tag":n+" Tagen"; }
+  function tage(n){ return n===0?"heute":n===1?"1 Tag":n+" Tagen"; }
   function rel(n){ return n===0?"heute":n===1?"morgen":"in "+n+" Tagen"; }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   function toast(msg, undo){ var h=$("toastHost"); h.innerHTML='<div class="toast" role="status"><span>'+esc(msg)+'</span>'+(undo?'<button type="button" data-act="undo">Rückgängig</button>':'')+'</div>'; clearTimeout(toast._t); toast._t=setTimeout(function(){h.innerHTML="";}, undo?6000:2600); }
@@ -376,11 +379,14 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function cOf(r){ return NODES[pfad(r)].c; }
 
   /* Zustand einer Bewerbung: Text, Dringlichkeit, fehlendes Feld, Sortierschlüssel */
+  /* Tage seit dem Anlegen (lokales Datum) */
+  function angelegt(r){ var d=new Date(r.erstellt||""); if(isNaN(d)) return null; var iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); var n=days(iso,today()); return n==null?null:Math.max(n,0); }
   function info(r){
     var p=pfad(r), n=NODES[p], t=today(), d, N;
     if(p==="prep"){
       if(r.schrittDatum){ N=days(t,r.schrittDatum); return {txt:(r.schritt||"Aufgabe")+" bis "+fmtS(r.schrittDatum), lvl:N<0?"late":N<=3?"soon":"muted", g:N<0?2:N<=3?0:3, v:N}; }
-      return {txt:r.schritt||"noch nicht beworben", lvl:"muted", g:5, v:0};
+      if(r.schritt) return {txt:r.schritt, lvl:"muted", g:5, v:0};
+      var A=angelegt(r); return {txt:A==null?"noch nicht beworben":A===0?"angelegt heute":A===1?"angelegt gestern":"angelegt vor "+A+" Tagen", lvl:"muted", g:5, v:A==null?0:-A};
     }
     if(n.c==="bew"){
       d=dateOf(r,"B"); if(!d) return {need:{k:"B",label:"Beworben am"}, g:1, v:0};
@@ -499,15 +505,14 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   }
 
   /* ---------- Baum ---------- */
-  /* In Bearbeitung: 4 Karten, dann „weitere“; Stufen: 3 Karten, dann „weitere“. Aufgeklappt wird gescrollt. */
-  var MAXS=4, HEAD=26, ENT=70, EGAP=6, GAP=10, GAPTG=36, EW=0, PREPN=4, NODEN=3;
+  /* Jeder Kasten zeigt höchstens 3 Karten, darunter wird gescrollt. In Bearbeitung steht senkrecht über Bewerbung. */
+  var MAXS=3, HEAD=26, ENT=74, EGAP=6, GAP=10;
   function isFold(k){ return !!ui.fold[k]; }
-  function prepH(n){ return n&&!isFold("prep") ? HEAD + 6 + ENT + 14 + 4 : HEAD + 4; }
   /* größere Lücke zwischen den Ästen Gespräch und Test */
-  function gapBefore(k,c){ return (k==="B"&&c==="B.T") ? GAPTG : GAP; }
+  function gapBefore(k,c){ return (k==="B"&&c==="B.T") ? GAP+26 : GAP; }
   function groups(){ var g={}; ORDER.forEach(function(k){ g[k]=[]; }); all().forEach(function(r){ g[pfad(r)].push(r); }); Object.keys(g).forEach(function(k){ g[k].sort(prioSort); }); return g; }
-  /* Gleiche Höhe zu- und aufgeklappt (3 Karten + Feld oder 4 sichtbare im Scrollbereich), damit der Pfad stehen bleibt */
-  function boxH(n,k){ var s=isFold(k)?0:Math.min(n,MAXS); return HEAD + (s?6+s*(ENT+EGAP):0) + 4; }
+  function entsH(s){ return s ? s*ENT+(s-1)*EGAP+4 : 0; }
+  function boxH(n,k){ var s=isFold(k)?0:Math.min(n,MAXS); return HEAD + (s?4+entsH(s):0) + 6; }
   function statusHtml(r){
     var i=info(r);
     if(i.need){
@@ -517,28 +522,59 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     return '<span class="es '+(i.lvl||"")+'">'+(i.badge?'<span class="b">'+esc(i.badge)+'</span> ':'')+esc(i.txt)+'</span>';
   }
   function entHtml(r){
-    var i=info(r), bd=artHtml(r);
-    return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+(bd?' hasb':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,role(r),r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en">'+esc(r.unternehmen||"Ohne Namen")+'</span><span class="er"><span class="rt">'+(esc(role(r))||'Rolle fehlt')+'</span></span>'+statusHtml(r)+(bd?'<span class="bdg">'+bd+'</span>':'')+'</div>';
+    var i=info(r), bd=artHtml(r), nm=r.unternehmen||"Ohne Namen", rl=role(r);
+    return '<div class="ent c-'+cOf(r)+(i.lvl==="soon"?' soon':'')+(ui.job===r.id?' sel':'')+(bd?' hasb':'')+'" data-job="'+esc(r.id)+'" tabindex="0" title="'+esc([r.unternehmen,rl,r.ort].filter(Boolean).join(" · "))+'"><span class="grip" aria-hidden="true"></span><span class="en" data-full="'+esc(nm)+'">'+esc(nm)+'</span><span class="er"><span class="rt" data-full="'+esc(rl)+'">'+(esc(rl)||'Rolle fehlt')+'</span></span>'+statusHtml(r)+(bd?'<span class="bdg">'+bd+'</span>':'')+'</div>';
   }
   function nodeHtml(k,G,style){
-    var n=NODES[k], list=G[k], c=list.length, hrow=k==="prep", fold=!!(c&&isFold(k)), cap=hrow?PREPN:NODEN, more=c>cap, open=!!expanded[k];
-    var h='<div class="nb c-'+n.c+(c?'':' empty')+(hrow?' hrow':'')+(fold?' fold':'')+(ui.mode==="node"&&ui.node===k?' sel':'')+'" data-node="'+k+'"'+(style?' style="'+style+'"':'')+'>';
+    var n=NODES[k], list=G[k], c=list.length, fold=!!(c&&isFold(k)), always=(k==="prep"||k==="B");
+    var h='<div class="nb c-'+n.c+(c?'':' empty')+(fold?' fold':'')+(ui.mode==="node"&&ui.node===k?' sel':'')+'" data-node="'+k+'"'+(style?' style="'+style+'"':'')+'>';
     h+='<div class="nhrow"><div class="nh" data-open-node="'+k+'" tabindex="0" role="button" aria-label="'+esc(chainLabel(k))+', '+c+' Bewerbungen"><span class="nd" data-anchor="'+k+'"></span><span class="nl">'+esc(n.l)+'</span><span class="nc">'+(c||"")+'</span></div>';
-    /* Pfeil hinter der Zahl klappt die Karten ganz zu: In Bearbeitung nach links, Stufen nach oben */
-    if(c) h+='<button type="button" class="fbtn" data-act="fold" data-key="'+k+'" aria-expanded="'+!fold+'" title="'+(fold?'Stellen aufklappen':'Stellen zuklappen')+'" aria-label="'+esc(n.l)+': '+(fold?'Stellen aufklappen':'Stellen zuklappen')+'">'+(hrow?(fold?'→':'←'):(fold?'↓':'↑'))+'</button>';
+    /* Pfeil hinter der Zahl klappt die Karten ganz zu */
+    if(c) h+='<button type="button" class="fbtn" data-act="fold" data-key="'+k+'" aria-expanded="'+!fold+'" title="'+(fold?'Stellen aufklappen':'Stellen zuklappen')+'" aria-label="'+esc(n.l)+': '+(fold?'Stellen aufklappen':'Stellen zuklappen')+'">'+(fold?'↓':'↑')+'</button>';
     h+='</div>';
-    if(c&&!fold){
-      var shown=more&&!open?list.slice(0,cap):list;
-      h+='<div class="ents'+(!hrow&&more&&open?' scroll':'')+'">'+shown.map(entHtml).join("");
-      if(more) h+= open ? '<button type="button" class="mtile less" data-act="more" data-key="'+k+'">weniger</button>' : '<button type="button" class="mtile" data-act="more" data-key="'+k+'" title="Alle '+c+' anzeigen"><b>+'+(c-cap)+'</b> weitere</button>';
-      h+='</div>';
-    }
+    /* In Bearbeitung und Bewerbung zeigen die Scrollleiste immer, die anderen ab der vierten Karte */
+    if(c&&!fold) h+='<div class="ents'+(always?' always':'')+'">'+list.map(entHtml).join("")+'</div>';
     return h+'</div>';
+  }
+
+  /* Kurznamen auf den Karten: erst Rechtsform weg, dann übliche Abkürzungen, dann das letzte Wort mit Punkt kürzen */
+  var LEGAL=/\s+(GmbH|AG|SE|ApS)?\s*&\s*Co\.?\s*(KGaA|KG)(?=\s|$)|\s+(GmbH|AG|SE|KGaA|KG|mbH|mbB|e\.\s?V\.|ApS|Ltd\.?|Inc\.?|PartG)(?=\s|$)/g;
+  var ABK=[[/\bUnternehmensgruppe\b/g,"Gruppe"],[/\bVerkaufsgesellschaft\b/g,"Verkaufsges."],[/\bGesellschaft\b/g,"Ges."],[/\bDeutschland\b/g,"Dtl."],[/\bInternationale?\b/g,"Int."],[/\bTechnology\b/g,"Tech."],[/\bGlasbearbeitungs?\b/g,"Glasbearb."],[/\bPersonalvermittlung\b/g,"Personalverm."],[/(\w)-Gruppe\b/g,"$1"]];
+  var RABK=[[/\bJunior\b/g,"Jr."],[/\bCorporate\b/g,"Corp."],[/\bManagement\b/g,"Mgmt."],[/\bKaufmännische[rs]?\b/g,"Kaufm."],[/\bMitarbeiter(in)?\b/g,"Mitarb."]];
+  function tidy(s){ return s.replace(/\s{2,}/g," ").replace(/\(\s*\)/g,"").trim(); }
+  function nameCands(full){
+    var out=[full], a=tidy(full.replace(LEGAL,"")); out.push(a);
+    var b=a; ABK.forEach(function(x){ b=b.replace(x[0],x[1]); }); b=tidy(b); out.push(b);
+    var c=tidy(b.replace(/\s*\([^)]*\)/g,"")); out.push(c);
+    var w=c.split(" ");
+    while(w.length>1){
+      var last=w[w.length-1], base=w.slice(0,-1).join(" ");
+      /* Schnitt nur vor einem Vokal nach einem Konsonanten, z. B. Logist., Techn., Transp. */
+      if(!/\.$/.test(last) && last.length>=6) for(var L=last.length-2; L>=3; L--) if(/[b-df-hj-np-tv-zß]/i.test(last.charAt(L-1)) && /[aeiouyäöü]/i.test(last.charAt(L))) out.push(base+" "+last.slice(0,L)+".");
+      out.push(base); w=w.slice(0,-1);
+    }
+    return out.filter(function(x,i){ return x && out.indexOf(x)===i; });
+  }
+  function roleCands(full){ var b=full; RABK.forEach(function(x){ b=b.replace(x[0],x[1]); }); return b!==full?[full,tidy(b)]:[full]; }
+  function fits(el){ return el.scrollWidth<=el.clientWidth+1; }
+  function fitCards(host){
+    var seen={};
+    host.querySelectorAll(".ent .en[data-full]").forEach(function(el){
+      var full=el.getAttribute("data-full"), cs=nameCands(full), pick=cs[cs.length-1];
+      for(var i=0;i<cs.length;i++){ el.textContent=cs[i]; if(fits(el)){ pick=cs[i]; break; } }
+      el.textContent=pick; (seen[pick]=seen[pick]||{})[full]=el;
+    });
+    /* Zwei verschiedene Firmen dürfen nicht gleich abgekürzt werden: dann voller Name mit … */
+    Object.keys(seen).forEach(function(k){ var f=Object.keys(seen[k]); if(f.length>1) f.forEach(function(x){ seen[k][x].textContent=x; }); });
+    host.querySelectorAll(".ent .rt[data-full]").forEach(function(el){
+      var cs=roleCands(el.getAttribute("data-full")||""); if(!cs[0]) return;
+      for(var i=0;i<cs.length;i++){ el.textContent=cs[i]; if(fits(el)) return; }
+    });
   }
   var LAY=null;
   function treeBusy(){ var a=document.activeElement; return a && $("tree").contains(a) && a.matches("input"); }
-  function treeScroll(host){ var o={x:host.scrollLeft, n:{}}; host.querySelectorAll('.nb[data-node] > .ents').forEach(function(e){ o.n[e.parentNode.getAttribute("data-node")]=[e.scrollLeft,e.scrollTop]; }); return o; }
-  function restoreScroll(host,o){ host.scrollLeft=o.x; Object.keys(o.n).forEach(function(k){ var e=host.querySelector('.nb[data-node="'+k+'"] > .ents'); if(e){ e.scrollLeft=o.n[k][0]; e.scrollTop=o.n[k][1]; } }); }
+  function treeScroll(host){ var o={x:host.scrollLeft, n:{}}; host.querySelectorAll('.nb[data-node] > .ents').forEach(function(e){ o.n[e.parentNode.getAttribute("data-node")]=e.scrollTop; }); return o; }
+  function restoreScroll(host,o){ host.scrollLeft=o.x; Object.keys(o.n).forEach(function(k){ var e=host.querySelector('.nb[data-node="'+k+'"] > .ents'); if(e) e.scrollTop=o.n[k]; }); }
   function renderTree(){
     var host=$("tree");
     if(host.hidden){ treeDirty=true; return; }
@@ -547,28 +583,40 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     treeDirty=false;
     if(!loaded){ host.innerHTML='<p class="empty-msg">wird geladen …</p>'; return; }
     var keep=treeScroll(host);
-    /* Unter 1100 px Breite (z. B. Handy) bleibt der Baum gleich groß und lässt sich nach rechts schieben */
-    var G=groups(), VW=host.clientWidth||1000, W=Math.max(VW,1100);
-    var colW=W/5, bw=Math.min(230, Math.max(150, colW-40));
-    EW=bw;
+    /* Breite: letzte Spalte endet am rechten Rand (wie „Neue Bewerbung“). Unter 1100 px (Handy) ist der Baum 1280 px breit und lässt sich seitlich schieben. */
+    var G=groups(), VW=host.clientWidth||1000, W=VW<1100?1280:VW;
+    /* Spalte 1 (In Bearbeitung, Bewerbung) und 2 sind breiter, weil dort die meisten Karten stehen; die letzte ist schmaler, damit der Pfad bis an den rechten Rand reicht */
+    var CG=Math.round(Math.min(72,Math.max(48,W*.045))), WT=[1.3,1.1,1,1,.85], u=(W-4*CG)/5.25, CW=[], CX=[], acc=0;
+    WT.forEach(function(f,i){ CW[i]=Math.floor(u*f); CX[i]=acc; acc+=CW[i]+CG; });
     var H={}, SUB={}, Y={};
-    ORDER.forEach(function(k){ H[k]= k==="prep" ? prepH(G[k].length) : boxH(G[k].length,k); });
-    function sub(k){ var n=NODES[k]; if(!n.ch.length) return SUB[k]=H[k]; var s=0; n.ch.forEach(function(c,i){ s+=sub(c)+(i?gapBefore(k,c):0); }); return SUB[k]=Math.max(H[k],s); }
-    sub("B");
-    function place(k,top){
-      var n=NODES[k];
-      if(!n.ch.length){ Y[k]=top+(SUB[k]-H[k])/2; return; }
-      var s=0; n.ch.forEach(function(c,i){ s+=SUB[c]+(i?gapBefore(k,c):0); });
-      var t=top+(SUB[k]-s)/2;
-      n.ch.forEach(function(c,i){ if(i) t+=gapBefore(k,c); place(c,t); t+=SUB[c]; });
-      var first=Y[n.ch[0]], last=Y[n.ch[n.ch.length-1]];
-      Y[k]=Math.min(Math.max((first+last)/2, top), top+SUB[k]-H[k]);
+    ORDER.forEach(function(k){ H[k]=boxH(G[k].length,k); });
+    var PG=20;
+    function layout(g){
+      GAP=g; SUB={}; Y={};
+      (function sub(k){ var n=NODES[k]; if(!n.ch.length) return SUB[k]=H[k]; var s=0; n.ch.forEach(function(c,i){ s+=sub(c)+(i?gapBefore(k,c):0); }); return SUB[k]=Math.max(H[k],s); })("B");
+      (function place(k,top){
+        var n=NODES[k];
+        if(!n.ch.length){ Y[k]=top+(SUB[k]-H[k])/2; return; }
+        var s=0; n.ch.forEach(function(c,i){ s+=SUB[c]+(i?gapBefore(k,c):0); });
+        var t=top+(SUB[k]-s)/2;
+        n.ch.forEach(function(c,i){ if(i) t+=gapBefore(k,c); place(c,t); t+=SUB[c]; });
+        var first=Y[n.ch[0]], last=Y[n.ch[n.ch.length-1]];
+        Y[k]=Math.min(Math.max((first+last)/2, top), top+SUB[k]-H[k]);
+      })("B",0);
+      /* In Bearbeitung steht oben in der ersten Spalte, Bewerbung darunter */
+      Y.prep=0; Y.B=Math.max(Y.B, H.prep+PG);
+      return Math.max(SUB.B, Y.B+H.B);
     }
-    var offset=H.prep+24; place("B",offset); Y.prep=0;
-    var total=offset+SUB.B, prepW=Math.min(VW-16, 6*EW+70);
-    var html='<div class="tcanvas" style="width:'+W+'px;height:'+(total+10)+'px"><svg id="wires"></svg>';
-    ORDER.forEach(function(k){ var x=k==="prep"?0:depth(k)*colW, w=k==="prep"?prepW:bw; html+=nodeHtml(k,G,'left:'+(x+8)+'px;top:'+(Y[k]+6)+'px;width:'+w+'px'+(k==="prep"?';--ew:'+EW+'px':'')); });
+    /* Höhe: Abstände wachsen, bis der Baum den Bildschirm füllt */
+    var top0=host.getBoundingClientRect().top+(window.scrollY||0), avail=window.innerHeight-top0-28;
+    var t1=layout(10), total=t1;
+    var t2=layout(20), slope=(t2-t1)/10;
+    /* reicht der Platz nicht, rücken die Kästen bis auf 6 px zusammen */
+    total = slope>0 ? layout(Math.max(6,Math.min(56,10+(avail-t1)/slope))) : layout(10);
+    var html='<div class="tcanvas" style="width:'+W+'px;height:'+(total+8)+'px"><svg id="wires"></svg>';
+    ORDER.forEach(function(k){ var d=depth(k); html+=nodeHtml(k,G,'left:'+(CX[d]+8)+'px;top:'+(Y[k]+6)+'px;width:'+CW[d]+'px'); });
     host.innerHTML=html+'</div>';
+    fitCards(host);
     restoreScroll(host,keep);
     LAY=true; drawWires();
   }
@@ -839,19 +887,14 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function renderJob(){
     var r=view(ui.job); if(!r){ ui.mode="none"; ui.job=null; return ""; }
     var p=pfad(r), n=NODES[p], ro=canWrite?'':' disabled', t=today();
-    var backLab = ui.from==="node"?NODES[ui.node].l:ui.from==="next"?"Als Nächstes":ui.from==="all"?"Alle Bewerbungen":ui.from==="offers"?"Angebote":ui.from==="firms"?"Mögliche Unternehmen":ui.from==="opts"?"Weiteres":"Schließen";
+    var backLab = ui.from==="node"?NODES[ui.node].l:ui.from==="next"?"Als Nächstes":ui.from==="all"?"Alle Bewerbungen":ui.from==="offers"?"Angebote":ui.from==="firms"?"Mögliche Unternehmen":ui.from==="opts"?"Weiteres":"";
+    var xLab = backLab ? "Zurück zu "+backLab : "Schließen";
     var h='<div class="job">';
-    h+='<div class="dh"><button type="button" class="back" data-act="backFromJob">‹ '+esc(backLab)+'</button><span class="savestate" id="saveState">'+(pending[r.id]||inflight[r.id]?'Speichert …':'Gespeichert')+'</span></div>';
+    h+='<div class="dh jobh"><span class="savestate" id="saveState">'+(pending[r.id]||inflight[r.id]?'Speichert …':'Gespeichert')+'</span><button type="button" class="xbtn" data-act="backFromJob" aria-label="'+esc(xLab)+'" title="'+esc(xLab)+'">✕</button></div>';
     h+='<div><input class="bare t1" data-k="unternehmen" value="'+esc(r.unternehmen||"")+'" placeholder="Unternehmen"'+ro+'><input class="bare t2" data-k="rolle" value="'+esc(r.rolle||"")+'" placeholder="Rolle, z. B. Junior Controller"'+ro+'></div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:12px 32px"><div><p class="sl">Anstellungsart</p><span class="chips">'+ARTEN.map(function(a){ return '<button type="button" class="chip'+artCls(a[0])+'" data-act="art" data-v="'+a[0]+'" aria-pressed="'+(r.art===a[0])+'"'+ro+'>'+a[1]+'</button>'; }).join("")+'</span></div>';
     h+='<div><p class="sl">'+(p==="prep"?"Unterlagen nötig":"Beworben mit")+'</p><span class="chips">'+[["","offen",""],["nein","Lebenslauf"," k-lb"],["ja","Lebenslauf + CV"," k-cv"]].map(function(o){ return '<button type="button" class="chip'+o[2]+'" data-act="ansch" data-v="'+o[0]+'" aria-pressed="'+((r.anschreiben||"")===o[0])+'"'+ro+'>'+o[1]+'</button>'; }).join("")+'</span></div></div>';
     h+='<div><p class="sl">Stand</p><div class="path">'+chain(p).map(function(k,i){ return (i?'<span class="arrow">›</span>':'')+'<span class="step c-'+NODES[k].c+'"><span class="dot"></span>'+esc(NODES[k].l)+'</span>'; }).join("")+'</div></div>';
-    if(canWrite){
-      h+='<div><p class="sl">'+(n.ch.length?'Weiter zu':'Pfad beendet')+'</p><div class="nexts">';
-      n.ch.forEach(function(c){ h+='<button type="button" class="nx c-'+NODES[c].c+'" data-act="go" data-v="'+c+'"><span class="dot"></span>'+esc(NODES[c].l)+'</button>'; });
-      var par=parentOf(p); if(par) h+='<button type="button" class="nx backstep" data-act="go" data-v="'+par+'">‹ Schritt zurück</button>';
-      h+='</div></div>';
-    }
     if(p!=="prep"){
       h+='<div><p class="sl">Termine und Daten</p><div class="dates">';
       chain(p).forEach(function(k){
@@ -975,10 +1018,6 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     ev.preventDefault(); moveGhost(ev.clientX,ev.clientY);
   });
   document.addEventListener("pointerup", function(){ if(drag) endDrag(true); });
-  document.addEventListener("wheel", function(ev){
-    var e=ev.target.closest&&ev.target.closest(".nb.hrow > .ents"); if(!e || e.scrollWidth<=e.clientWidth || Math.abs(ev.deltaX)>Math.abs(ev.deltaY)) return;
-    var before=e.scrollLeft; e.scrollLeft+=ev.deltaY; if(e.scrollLeft!==before) ev.preventDefault();
-  }, {passive:false});
   document.addEventListener("pointercancel", function(){ if(drag) endDrag(false); });
   document.addEventListener("touchmove", function(ev){ if(drag&&drag.active) ev.preventDefault(); }, {passive:false});
 
@@ -991,7 +1030,6 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var t=ev.target.closest("[data-act]"); if(!t||t.disabled) return;
     var a=t.getAttribute("data-act"), v=t.getAttribute("data-v");
     if(a==="undo") undo();
-    else if(a==="more"){ var key=t.getAttribute("data-key"); expanded[key]=!expanded[key]; renderTree(); var mt=$("tree").querySelector('[data-node="'+key+'"] .mtile'); if(mt) mt.focus({preventScroll:true}); }
     else if(a==="fold"){ var fk=t.getAttribute("data-key"); if(ui.fold[fk]) delete ui.fold[fk]; else ui.fold[fk]=true; saveUi(); renderTree(); var fb=$("tree").querySelector('[data-key="'+fk+'"].fbtn'); if(fb) fb.focus({preventScroll:true}); }
     else if(a==="nextAll"){ nextAll=!nextAll; renderAgenda(); }
     else if(a==="closeDetail") show("none");
@@ -1040,10 +1078,11 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   $("undoBtn").addEventListener("click", undo);
   $("addBtn").addEventListener("click", addNew);
   var lastW=0;
-  function onResize(){ var w=$("tree").clientWidth; if(Math.abs(w-lastW)>2){ lastW=w; renderTree(); } else drawWires(); }
+  var lastH=0;
+  function onResize(){ var w=$("tree").clientWidth, hh=window.innerHeight; if(Math.abs(w-lastW)>2||Math.abs(hh-lastH)>2){ lastW=w; lastH=hh; renderTree(); } else drawWires(); }
   if(window.ResizeObserver) new ResizeObserver(function(){ requestAnimationFrame(onResize); }).observe($("tree"));
-  else window.addEventListener("resize", function(){ requestAnimationFrame(onResize); });
-  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ drawWires(); });
+  window.addEventListener("resize", function(){ requestAnimationFrame(onResize); });
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ if(!$("tree").hidden) fitCards($("tree")); drawWires(); });
 
   /* Nicht neu zeichnen, solange eine Maustaste oder ein Finger unten ist, sonst geht der Klick verloren */
   var ptrDown=false, renderPending=false;
