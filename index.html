@@ -97,6 +97,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .ents.always{overflow-y:scroll}
 /* Stufen im Pfad: eine Karte sichtbar, weitere über die Scrollleiste */
 .ents.one{max-height:68px}
+.ents.two{max-height:138px}
 .nb.up .ents{margin:0 0 4px 12px}
 /* Scrollleiste immer sichtbar (auch bei ausblendenden Leisten in Edge und macOS) */
 .ents::-webkit-scrollbar{width:8px}
@@ -139,12 +140,13 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .ent.hasb .er,.ent.hasb .es,.ent.hasb .need{margin-right:46px}
 .ent .bdg{position:absolute;right:7px;bottom:5px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 .ent .bdg .art{margin-left:0}
-.dot.rb{background:conic-gradient(var(--c-bew) 0 25%,var(--c-t) 0 50%,var(--c-g) 0 75%,var(--c-g2) 0)}
+.dot.rb{background:conic-gradient(var(--c-bew) 0 33.3%,var(--c-g) 0 66.6%,var(--c-g2) 0)}
 .ents > .ent{flex:none}
 .tcanvas{position:relative}
 .tsizer{position:relative;overflow:hidden}
 .nhrow{display:flex;align-items:center;gap:0;min-width:0}
-.nhrow > .nh{min-width:0}
+/* Beschriftung und Zahl werden nie gequetscht; bei schmaler Spalte ragen die Sortierknöpfe etwas über den Kasten */
+.nhrow > .nh{flex:none}
 .fbtn{flex:none;width:24px;height:24px;margin-left:-2px;padding:0;border:0;border-radius:6px;background:none;color:var(--muted);font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .fbtn:hover{background:var(--hover);color:var(--ink)}
 .nb.fold .nl{color:var(--ink2)}
@@ -385,25 +387,22 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   var NODES={}, ORDER=[];
   function def(id,l,c,ch){ NODES[id]={id:id,l:l,c:c,ch:ch||[]}; ORDER.push(id); }
   def("prep","In Bearbeitung","prep",["B"]);
-  def("B","Bewerbung","bew",["B.Z","B.G","B.T","B.A"]);
+  def("B","Bewerbung","bew",["B.Z","B.G","B.A"]);
   def("B.Z","Zusage","z");
   def("B.G","Gespräch","g",["B.G.Z","B.G.G2","B.G.A"]);
   def("B.G.Z","Zusage","z");
   def("B.G.G2","2. Gespräch","g2",["B.G.G2.Z","B.G.G2.A"]);
   def("B.G.G2.Z","Zusage","z"); def("B.G.G2.A","Absage","a");
   def("B.G.A","Absage","a");
-  def("B.T","Test","t",["B.T.Z","B.T.G","B.T.A"]);
-  def("B.T.Z","Zusage","z");
-  def("B.T.G","Gespräch","g",["B.T.G.Z","B.T.G.G2","B.T.G.A"]);
-  def("B.T.G.Z","Zusage","z");
-  def("B.T.G.G2","2. Gespräch","g2",["B.T.G.G2.Z","B.T.G.G2.A"]);
-  def("B.T.G.G2.Z","Zusage","z"); def("B.T.G.G2.A","Absage","a");
-  def("B.T.G.A","Absage","a");
-  def("B.T.A","Absage","a");
   def("B.A","Absage","a");
-  var STUFEN=[["prep","In Bearbeitung"],["bew","Bewerbung"],["t","Test"],["g","Gespräch"],["g2","2. Gespräch"],["z","Zusage"],["a","Absage"]];
+  /* Hauptlinie im Baum: diese Stufen liegen waagerecht auf einer Höhe */
+  var SPINE=["B","B.G","B.G.G2"];
+  /* Ältere Einträge mit Test-Stufe (B.T…): Ein Test gehört jetzt zur Bewerbung, B.T.G wird B.G usw. */
+  function isLegacy(k){ return typeof k==="string" && /^B\.T(\.|$)/.test(k); }
+  function legacyK(k){ return isLegacy(k) ? k.replace(/^B\.T(?=\.|$)/,"B") : k; }
+  var STUFEN=[["prep","In Bearbeitung"],["bew","Bewerbung"],["g","Gespräch"],["g2","2. Gespräch"],["z","Zusage"],["a","Absage"]];
   var ARTEN=[["Vz","Vollzeit"],["Tz","Teilzeit"],["Tr","Trainee"],["Pr","Praktikum"]];
-  var TERMIN={t:1,g:1,g2:1};
+  var TERMIN={g:1,g2:1};
   function depth(id){ return id==="prep"?0:id.split(".").length-1; }
   function parentOf(id){ if(id==="prep") return null; if(id==="B") return "prep"; return id.slice(0,id.lastIndexOf(".")); }
   function chain(id){ if(id==="prep") return ["prep"]; var p=id.split("."), out=[]; for(var i=1;i<=p.length;i++) out.push(p.slice(0,i).join(".")); return out; }
@@ -521,7 +520,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var r=view(id); if(!r||!NODES[to]) return; var from=pfad(r); if(from===to) return;
     var keep=chain(to), D=dates(r).filter(function(x){ return keep.indexOf(x.k)>=0; });
     var c=NODES[to].c;
-    // Bewerbung, Zusage, Absage bekommen heute; Termine (Test, Gespräche) trägst du selbst ein
+    // Bewerbung, Zusage, Absage bekommen heute; Termine (Gespräche) trägst du selbst ein
     if(to!=="prep" && !TERMIN[c] && !D.some(function(x){ return x.k===to; }) && (to!=="B" || from==="prep")) D.push({k:to, d:today()});
     var patch={pfad:to, daten:D};
     undoable(id, patch, (r.unternehmen||"Ohne Namen")+" → "+NODES[to].l+(TERMIN[c]?". Termin eintragen":""));
@@ -533,7 +532,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     if(!loaded){ el.innerHTML='<li>'+(dbState==="none"?"Speichern ist in dieser Ansicht nicht verfügbar.":"wird geladen …")+'</li>'; return; }
     var c={prep:0,run:0,z:0,a:0};
     all().forEach(function(r){ var k=cOf(r); if(k==="prep") c.prep++; else if(k==="z") c.z++; else if(k==="a") c.a++; else c.run++; });
-    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li><span class="dot rb" title="Bewerbung, Test, Gespräch, 2. Gespräch"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
+    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li><span class="dot rb" title="Bewerbung, Gespräch, 2. Gespräch"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
     $("undoBtn").disabled=!undoStack.length;
     $("addBtn").disabled=!(loaded&&canWrite&&col&&token());
     $("offerN").textContent=c.z?c.z:"";
@@ -567,20 +566,17 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function renderNext(){
     var items=agendaItems();
     var h='<div class="dh"><p class="crumb">Als Nächstes<span class="cnt">'+items.length+'</span></p><button type="button" class="xbtn" data-act="closeDetail" aria-label="Schließen">✕</button></div>';
-    if(!items.length) return h+'<p class="empty-msg">Keine Termine, Fristen oder Aufgaben. Sobald eine Bewerbung im Test oder Gespräch steht, erscheint ihr Termin hier.</p>';
+    if(!items.length) return h+'<p class="empty-msg">Keine Termine, Fristen oder Aufgaben. Sobald eine Bewerbung im Gespräch steht, erscheint ihr Termin hier.</p>';
     return h+'<ul class="agenda nextlist">'+items.map(function(it){
       return '<li class="c-'+it.c+'" data-open-job="'+esc(it.id)+'" tabindex="0"><span class="d">'+(it.d?esc(fmt(it.d)):'–')+'</span><span class="dot"></span><span class="w">'+esc(it.co||"Ohne Namen")+' <span>· '+esc(it.w)+'</span></span>'+(it.tag?'<span class="tag '+it.tag[0]+'">'+esc(it.tag[1])+'</span>':'<span></span>')+'</li>';
     }).join("")+'</ul>';
   }
 
   /* ---------- Baum ---------- */
-  /* Jeder Kasten zeigt höchstens 3 Karten, darunter wird gescrollt. In Bearbeitung steht senkrecht über Bewerbung. */
+  /* In Bearbeitung und Bewerbung zeigen höchstens 3 Karten, jede weitere Stufe 2; darunter wird gescrollt. In Bearbeitung steht senkrecht über Bewerbung. */
   var HEAD=26, ENT=64, EGAP=6, GAP=10;
-  /* In Bearbeitung und Bewerbung zeigen 3 Karten, jede Stufe im Pfad 1 Karte; weitere über die Scrollleiste */
-  function capOf(k){ return k==="prep"||k==="B" ? 3 : 1; }
+  function capOf(k){ return k==="prep"||k==="B" ? 3 : 2; }
   function isFold(k){ return !!ui.fold[k]; }
-  /* größere Lücke zwischen den Ästen Gespräch und Test */
-  function gapBefore(k,c){ return (k==="B"&&c==="B.T") ? GAP+26 : GAP; }
   function groups(){ var g={}; ORDER.forEach(function(k){ g[k]=[]; }); all().forEach(function(r){ g[pfad(r)].push(r); }); Object.keys(g).forEach(function(k){ nodeSort(k,g[k]); }); return g; }
   /* Sortierung je Kasten: ohne Auswahl nach Dringlichkeit; „alpha“ = A–Z, „asc“ = Vergangenheit → Zukunft, „desc“ = Zukunft → Vergangenheit.
      Datum: In Bearbeitung das Anlegedatum, sonst das Datum der aktuellen Stufe, ersatzweise das Bewerbungsdatum. */
@@ -601,7 +597,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   /* Bei Zusage steht die Karte über der Beschriftung: dort ist im Baum meist Platz frei */
   function isUp(k,n){ return NODES[k].c==="z" && n>0 && !isFold(k); }
   function labelOff(k,n){ return isUp(k,n) ? entsH(Math.min(n,capOf(k)))+4 : 0; }
-  /* Datumsfeld: Klick öffnet den Kalender; Termine (Test, Gespräche) mit Uhrzeit */
+  /* Datumsfeld: Klick öffnet den Kalender; Termine (Gespräche) mit Uhrzeit */
   function dtField(o){
     return '<button type="button" class="dtf'+(o.cls?' '+o.cls:'')+'" data-kind="'+o.kind+'" data-dk="'+esc(o.k)+'" data-job="'+esc(o.job)+'" data-time="'+(o.time?1:0)+'" data-v="'+esc(o.d||"")+'" aria-label="'+esc(o.label||"Datum wählen")+'"'+(canWrite?'':' disabled')+'><span class="dd'+(o.d?'':' ph')+'">'+(o.d?fmtJ(o.d):'TT.MM.JJ')+'</span>'+(o.time?'<span class="tt'+(o.t?'':' ph')+'">'+(o.t||'--:--')+'</span>':'')+'</button>';
   }
@@ -619,7 +615,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   }
   function nodeHtml(k,G,style){
     var n=NODES[k], list=G[k], c=list.length, fold=!!(c&&isFold(k)), always=(k==="prep"||k==="B"), up=isUp(k,c);
-    var entsHtml = (c&&!fold) ? '<div class="ents'+(always?' always':' one')+'">'+list.map(entHtml).join("")+'</div>' : '';
+    var entsHtml = (c&&!fold) ? '<div class="ents'+(always?' always':capOf(k)===2?' two':' one')+'">'+list.map(entHtml).join("")+'</div>' : '';
     var h='<div class="nb c-'+n.c+(c?'':' empty')+(fold?' fold':'')+(up?' up':'')+(ui.mode==="node"&&ui.node===k?' sel':'')+'" data-node="'+k+'"'+(style?' style="'+style+'"':'')+'>';
     if(up) h+=entsHtml;
     h+='<div class="nhrow"><div class="nh" data-open-node="'+k+'" tabindex="0" role="button" aria-label="'+esc(chainLabel(k))+', '+c+' Bewerbungen"><span class="nd" data-anchor="'+k+'"></span><span class="nl">'+esc(n.l)+'</span><span class="nc">'+(c||"")+'</span></div>';
@@ -695,49 +691,47 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var H={}, SUB={}, Y={};
     ORDER.forEach(function(k){ H[k]=boxH(G[k].length,k); });
     var PG=20;
-    /* Kontur-Layout: Geschwister-Teilbäume rücken so dicht zusammen, wie es jede Spalte für sich erlaubt.
-       So nimmt eine Karte nur in ihrer eigenen Spalte Platz weg und schiebt den übrigen Pfad nicht nach unten. */
     var LO={}; ORDER.forEach(function(k){ LO[k]=labelOff(k,G[k].length); });
+    /* Hauptlinie: Bewerbung, Gespräch und 2. Gespräch liegen waagerecht auf Höhe von „Bewerbung“.
+       Von jeder Stufe geht die Zusage nach oben und die Absage nach unten ab, beide gleich weit, soweit oben Platz ist. */
     function layout(g){
-      GAP=g; Y={};
-      function build(k){
-        var n=NODES[k], d0=depth(k), cont={}, pos={};
-        if(!n.ch.length){ cont[d0]=[-LO[k], H[k]-LO[k]]; pos[k]=0; return {cont:cont,pos:pos}; }
-        var mc={}, mp={}, offs=[];
-        n.ch.forEach(function(c,i){
-          var sb=build(c), off=0;
-          if(i){ off=-1e9; var gp=gapBefore(k,c); Object.keys(sb.cont).forEach(function(d){ if(mc[d]) off=Math.max(off, mc[d][1]+gp-sb.cont[d][0]); }); if(off<-1e8) off=offs[i-1]; }
-          offs.push(off);
-          Object.keys(sb.cont).forEach(function(d){ var v=sb.cont[d]; if(mc[d]){ mc[d]=[Math.min(mc[d][0],v[0]+off), Math.max(mc[d][1],v[1]+off)]; } else mc[d]=[v[0]+off, v[1]+off]; });
-          Object.keys(sb.pos).forEach(function(x){ mp[x]=sb.pos[x]+off; });
-        });
-        var mid=(offs[0]+offs[offs.length-1])/2;
-        Object.keys(mc).forEach(function(d){ cont[d]=[mc[d][0]-mid, mc[d][1]-mid]; });
-        Object.keys(mp).forEach(function(x){ pos[x]=mp[x]-mid; });
-        cont[d0]=[-LO[k], H[k]-LO[k]]; pos[k]=0;
-        return {cont:cont,pos:pos};
+      Y={};
+      /* Ein Kasten ist durch seinen Innenabstand 10 px höher als H */
+      var dmin=70+g, upMin=HEAD+16+g, cols=[], i;
+      for(i=1;i<=SPINE.length;i++){
+        var par=SPINE[i-1], sp=SPINE[i]||null;
+        /* Absage beginnt unter den Karten der Stufe auf der Hauptlinie in derselben Spalte */
+        cols.push({sp:sp, z:par+".Z", a:par+".A", dn:Math.max(dmin, (sp?H[sp]:HEAD+6)+10+g)});
       }
-      var t=build("B"), minTop=0, maxBot=0;
-      Object.keys(t.cont).forEach(function(d){ minTop=Math.min(minTop,t.cont[d][0]); maxBot=Math.max(maxBot,t.cont[d][1]); });
-      /* In Bearbeitung steht oben in der ersten Spalte, Bewerbung darunter */
-      var yB=Math.max(-minTop, H.prep+PG-t.cont[0][0]);
-      Object.keys(t.pos).forEach(function(x){ Y[x]=yB+t.pos[x]-LO[x]; });
-      Y.prep=0;
-      return Math.max(H.prep, yB+maxBot);
+      /* In Bearbeitung steht oben in der ersten Spalte, Bewerbung darunter; über der Hauptlinie muss jede Zusage Platz haben */
+      var yS=H.prep+PG;
+      cols.forEach(function(c){ yS=Math.max(yS, LO[c.z]+upMin); });
+      var bottom=Math.max(H.prep, yS+H.B);
+      cols.forEach(function(c){
+        var up=Math.max(upMin, Math.min(c.dn, yS-LO[c.z]));
+        Y[c.z]=yS-up-LO[c.z];
+        Y[c.a]=yS+c.dn;
+        if(c.sp) Y[c.sp]=yS;
+        bottom=Math.max(bottom, Y[c.a]+H[c.a]);
+      });
+      Y.B=yS; Y.prep=0;
+      return bottom;
     }
-    /* Höhe: Die Abstände wachsen, bis der Baum die Fensterhöhe füllt (höchstens 56 px, mindestens 6 px).
+    /* Höhe: Die Abstände wachsen, bis der Baum die Fensterhöhe füllt (höchstens 96 px, mindestens 6 px).
        Der Baum wird nie verkleinert; passt er auch mit 6 px nicht, lässt sich die Seite etwas scrollen. */
-    var top0=host.getBoundingClientRect().top+(window.scrollY||0), avail=window.innerHeight-top0-24, total, lo=6, hi=56;
+    var top0=host.getBoundingClientRect().top+(window.scrollY||0), avail=window.innerHeight-top0-24, total, lo=6, hi=96;
     if(layout(hi)<=avail) lo=hi; else if(layout(lo)<=avail){ for(var it=0; it<18; it++){ var mid=(lo+hi)/2; if(layout(mid)<=avail) lo=mid; else hi=mid; } }
     total=layout(lo);
     SCALE=1;
-    /* Breite: letzte Spalte endet am rechten Rand (wie „Neue Bewerbung“). Unter 1100 px (Handy) ist der Baum 1280 px breit und lässt sich seitlich schieben. */
+    /* Breite: letzte Spalte endet am rechten Rand (wie „Neue Bewerbung“). Unter 1100 px (Handy) ist der Baum 1280 px breit und lässt sich seitlich schieben.
+       Vier Spalten: Bewerbung, Gespräch, 2. Gespräch, Ergebnis nach dem 2. Gespräch. Karten werden nicht beliebig breit, übrige Breite geht in die Abstände.
+       Die letzte Spalte ist nur so breit wie ihre Beschriftung, solange dort keine Karte liegt. */
     var W=phone?1280:VW;
-    /* Spalte 1 (In Bearbeitung, Bewerbung) und 2 sind breiter, weil dort die meisten Karten stehen.
-       Die letzte Spalte ist nur so breit wie ihre Beschriftung, solange dort keine Karte liegt: dann endet der Pfad am rechten Rand. */
-    var CG=Math.round(Math.min(72,Math.max(48,W*.045))), last4=ORDER.some(function(k){ return depth(k)===4 && G[k].length; });
-    var WT=last4?[1.3,1.1,1,1,.85]:[1.3,1.1,1,1], u=(W-4*CG-(last4?0:88))/(last4?5.25:4.4), CW=[], CX=[], acc=0;
-    WT.forEach(function(f,i){ CW[i]=Math.floor(u*f); }); if(!last4) CW[4]=88;
+    var CG0=Math.round(Math.min(72,Math.max(48,W*.045))), last=ORDER.some(function(k){ return depth(k)===3 && G[k].length; });
+    var WT=last?[1.3,1.1,1,1]:[1.3,1.1,1], CAP=[440,380,360,360], LW=last?0:88;
+    var u=(W-3*CG0-LW)/(last?4.4:3.4), CW=[], CX=[], acc=0;
+    WT.forEach(function(f,i){ CW[i]=Math.min(Math.floor(u*f), CAP[i]); }); if(!last) CW[3]=88;
+    var CG=Math.max(CG0, Math.floor((W-CW.reduce(function(x,w){ return x+w; },0))/3));
     CW.forEach(function(w,i){ CX[i]=acc; acc+=w+CG; });
     var html='<div class="tsizer" style="width:'+W+'px;height:'+(total+8)+'px"><div class="tcanvas" style="width:'+W+'px;height:'+(total+8)+'px"><svg id="wires"></svg>';
     ORDER.forEach(function(k){ var d=depth(k); html+=nodeHtml(k,G,'left:'+(CX[d]+8)+'px;top:'+(Y[k]+6)+'px;width:'+CW[d]+'px'); });
@@ -1366,12 +1360,22 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     FIELDS.forEach(function(k){ o[k] = r[k]==null ? "" : String(r[k]); });
     /* Unbekannte Felder (z. B. aus einer neueren Fassung der Seite) unverändert behalten, damit beim Speichern nichts verloren geht */
     Object.keys(r).forEach(function(k){ if(k in o || k==="daten" || k==="schritte" || !/^[A-Za-z][A-Za-z0-9_]{0,40}$/.test(k)) return; var v=r[k]; if(typeof v==="string"||typeof v==="number"||typeof v==="boolean") o[k]=v; });
+    /* Alte Test-Stufen (B.T…) beim Laden umrechnen: der Test gehört zur Bewerbung, B.T.G wird B.G usw. */
+    o.pfad=legacyK(o.pfad);
     if(!NODES[o.pfad]) o.pfad = (Array.isArray(r.schritte)&&r.schritte.length) ? "B" : "prep";
-    o.daten = Array.isArray(r.daten) ? r.daten.filter(function(x){ return x && NODES[x.k] && isIso(x.d); }).map(function(x){ var y={k:x.k, d:x.d}; if(typeof x.t==="string" && /^\d{2}:\d{2}$/.test(x.t)) y.t=x.t; return y; }) : [];
+    o.daten = Array.isArray(r.daten) ? legacyDaten(r.daten).filter(function(x){ return x && NODES[x.k] && isIso(x.d); }).map(function(x){ var y={k:x.k, d:x.d}; if(typeof x.t==="string" && /^\d{2}:\d{2}$/.test(x.t)) y.t=x.t; return y; }) : [];
     if(["","angenommen","abgelehnt"].indexOf(o.entscheidung)<0) o.entscheidung="";
     if(["","ja","nein"].indexOf(o.anschreiben)<0) o.anschreiben="";
     if(!isIso(o.frist)) o.frist=""; if(!isIso(o.eintritt)) o.eintritt=""; if(!isIso(o.schrittDatum)) o.schrittDatum="";
     return o;
+  }
+  /* Das Testdatum selbst (B.T) entfällt, spätere Stufen behalten ihr Datum; gibt es die neue Stufe schon, bleibt deren Datum */
+  function legacyDaten(list){
+    if(!list.some(function(x){ return x && isLegacy(x.k); })) return list;
+    var seen={}, out=[];
+    list.forEach(function(x){ if(x && !isLegacy(x.k)){ seen[x.k]=1; out.push(x); } });
+    list.forEach(function(x){ if(x && isLegacy(x.k) && x.k!=="B.T"){ var k=legacyK(x.k); if(!seen[k]){ seen[k]=1; out.push(Object.assign({}, x, {k:k})); } } });
+    return out;
   }
   function parseDoc(o){
     var list=Array.isArray(o)?o:(o&&Array.isArray(o.bewerbungen)?o.bewerbungen:[]), s={}, t={};
