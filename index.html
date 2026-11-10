@@ -98,6 +98,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 /* Stufen im Pfad: eine Karte sichtbar, weitere über die Scrollleiste */
 .ents.one{max-height:68px}
 .ents.two{max-height:138px}
+.ents.three{max-height:208px}
 .nb.up .ents{margin:0 0 4px 12px}
 /* Scrollleiste immer sichtbar (auch bei ausblendenden Leisten in Edge und macOS) */
 .ents::-webkit-scrollbar{width:8px}
@@ -579,7 +580,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   /* ---------- Baum ---------- */
   /* In Bearbeitung und Bewerbung zeigen höchstens 3 Karten, jede weitere Stufe 2; darunter wird gescrollt. In Bearbeitung steht senkrecht über Bewerbung. */
   var HEAD=26, ENT=64, EGAP=6, GAP=10;
-  function capOf(k){ return k==="prep"||k==="B" ? 3 : 2; }
+  function capOf(k){ return k==="prep"||k==="B"||k==="B.G"||k==="B.G.G2" ? 3 : 2; }
   function isFold(k){ return !!ui.fold[k]; }
   function groups(){ var g={}; ORDER.forEach(function(k){ g[k]=[]; }); all().forEach(function(r){ g[pfad(r)].push(r); }); Object.keys(g).forEach(function(k){ nodeSort(k,g[k]); }); return g; }
   /* Sortierung je Kasten: ohne Auswahl nach Dringlichkeit; „alpha“ = A–Z, „asc“ = Vergangenheit → Zukunft, „desc“ = Zukunft → Vergangenheit.
@@ -624,7 +625,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   }
   function nodeHtml(k,G,style){
     var n=NODES[k], list=G[k], c=list.length, fold=!!(c&&isFold(k)), always=(k==="prep"||k==="B"), up=isUp(k,c);
-    var entsHtml = (c&&!fold) ? '<div class="ents'+(always?' always':capOf(k)===2?' two':' one')+'">'+list.map(entHtml).join("")+'</div>' : '';
+    var entsHtml = (c&&!fold) ? '<div class="ents'+(always?' always':capOf(k)===3?' three':capOf(k)===2?' two':' one')+'">'+list.map(entHtml).join("")+'</div>' : '';
     var h='<div class="nb c-'+n.c+(c?'':' empty')+(fold?' fold':'')+(up?' up':'')+(ui.mode==="node"&&ui.node===k?' sel':'')+'" data-node="'+k+'"'+(style?' style="'+style+'"':'')+'>';
     if(up) h+=entsHtml;
     h+='<div class="nhrow"><div class="nh" data-open-node="'+k+'" tabindex="0" role="button" aria-label="'+esc(chainLabel(k))+', '+c+' Bewerbungen"><span class="nd" data-anchor="'+k+'"></span><span class="nl">'+esc(n.l)+'</span><span class="nc">'+(c||"")+'</span></div>';
@@ -711,8 +712,11 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       var dmin=70+g, cols=[], i;
       for(i=1;i<=SPINE.length;i++){
         var par=SPINE[i-1], sp=SPINE[i]||null;
-        cols.push({sp:sp, z:par+".Z", a:par+".A", dn:Math.max(dmin, (sp?boxFix(sp):HEAD+6)+10+g)});
+        cols.push({sp:sp, z:par+".Z", a:par+".A"});
       }
+      /* Alle Absagen auf einer Höhe: unter dem höchsten Kasten der Hauptlinie */
+      var dn=dmin; SPINE.forEach(function(s){ if(s!=="B") dn=Math.max(dn, boxFix(s)+10+g); });
+      cols.forEach(function(c){ c.dn=dn; });
       var yS=boxFix("prep")+PG;
       cols.forEach(function(c){ yS=Math.max(yS, boxFix(c.z)+10+g); });
       var bottom=yS+boxFix("B");
@@ -732,15 +736,12 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     total=layout(lo);
     SCALE=1;
     /* Breite: letzte Spalte endet am rechten Rand (wie „Neue Bewerbung“). Unter 1100 px (Handy) ist der Baum 1280 px breit und lässt sich seitlich schieben.
-       Vier Spalten: Bewerbung, Gespräch, 2. Gespräch, Ergebnis nach dem 2. Gespräch. Karten werden nicht beliebig breit, übrige Breite geht in die Abstände.
-       Die letzte Spalte ist nur so breit wie ihre Beschriftung, solange dort keine Karte liegt. */
+       Vier gleich breite Spalten: Bewerbung, Gespräch, 2. Gespräch, Ergebnis nach dem 2. Gespräch. Karten werden nicht beliebig breit, übrige Breite geht in die Abstände. */
     var W=phone?1280:VW;
-    var CG0=Math.round(Math.min(72,Math.max(48,W*.045))), last=ORDER.some(function(k){ return depth(k)===3 && G[k].length; });
-    var WT=last?[1.3,1.1,1,1]:[1.3,1.1,1], CAP=[440,380,360,360], LW=last?0:88;
-    var u=(W-3*CG0-LW)/(last?4.4:3.4), CW=[], CX=[], acc=0;
-    /* Alle Kästen so breit wie die Spalte von „Gespräch“ */
-    var CWg=Math.min(Math.floor(u*WT[1]), CAP[1]); WT.forEach(function(f,i){ CW[i]=CWg; }); if(!last) CW[3]=88;
-    var CG=Math.max(CG0, Math.floor((W-CW.reduce(function(x,w){ return x+w; },0))/3));
+    var CG0=Math.round(Math.min(60,Math.max(40,W*.032)));
+    /* Vier gleich breite Spalten (Bewerbung, Gespräch, 2. Gespräch, Ergebnis danach), unabhängig davon, wo Karten liegen */
+    var CWg=Math.min(Math.floor((W-3*CG0)/4), 360), CW=[CWg,CWg,CWg,CWg], CX=[], acc=0;
+    var CG=Math.max(CG0, Math.floor((W-4*CWg)/3));
     CW.forEach(function(w,i){ CX[i]=acc; acc+=w+CG; });
     var html='<div class="tsizer" style="width:'+W+'px;height:'+(total+8)+'px"><div class="tcanvas" style="width:'+W+'px;height:'+(total+8)+'px"><svg id="wires"></svg>';
     ORDER.forEach(function(k){ var d=depth(k); html+=nodeHtml(k,G,'left:'+(CX[d]+8)+'px;top:'+(Y[k]+6)+'px;width:'+CW[d]+'px'); });
