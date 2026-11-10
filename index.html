@@ -91,7 +91,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .nh:hover .nl{text-decoration:underline;text-underline-offset:3px}
 .nd{width:14px;height:14px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 3px var(--bg)}
 .nl{font-size:13.5px;font-weight:600;white-space:nowrap}
-.nc{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.nc{font-size:13.5px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
 .nb.empty .nl{color:var(--muted);font-weight:500}
 .ents{display:flex;flex-direction:column;gap:6px;margin:4px 0 0 12px;padding:2px;max-height:208px;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;overscroll-behavior:contain}
 .ents.always{overflow-y:scroll}
@@ -139,6 +139,7 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 .ent.hasb .er,.ent.hasb .es,.ent.hasb .need{margin-right:46px}
 .ent .bdg{position:absolute;right:7px;bottom:5px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 .ent .bdg .art{margin-left:0}
+.dot.all{background:conic-gradient(#EF4444,#F59E0B,#EAB308,#22C55E,#06B6D4,#3B82F6,#8B5CF6,#EC4899,#EF4444)}
 .dot.rb{background:conic-gradient(var(--c-bew) 0 33.3%,var(--c-g) 0 66.6%,var(--c-g2) 0)}
 .ents > .ent{flex:none}
 .tcanvas{position:relative}
@@ -208,7 +209,8 @@ body.dragging .nb{box-shadow:inset 0 0 0 1px var(--line)}
 
 /* Unter dem Baum */
 .below{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:18px}
-.toolbar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.toolbar{display:flex;justify-content:flex-start;gap:10px;flex-wrap:wrap;margin-top:14px}
+.toolbar.tbr{justify-content:flex-end;margin-top:6px}
 .tb{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line2);background:var(--bg);font-size:13px;font-weight:500;color:var(--ink2)}
 .tb:hover{background:var(--hover)}
 .tb[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -348,6 +350,11 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     <div>
       <h1 class="brand">Bewerbungen</h1>
       <ul class="stats" id="stats"><li>wird geladen …</li></ul>
+      <div class="toolbar">
+      <button type="button" class="tb" id="nextBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Als Nächstes <span class="n" id="nextN"></span></button>
+      <button type="button" class="tb" id="eyeBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Alle Bewerbungen</button>
+      <button type="button" class="tb" id="offerBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.6L16 9.5"/></svg>Angebote <span class="n" id="offerN"></span></button>
+      </div>
     </div>
     <div class="actcol">
     <div class="acts">
@@ -360,6 +367,10 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       <button class="btn primary" id="addBtn" type="button">+ Neue Bewerbung</button>
     </div>
     <label class="search" id="searchBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="searchIn" type="search" placeholder="Suche" autocomplete="off" spellcheck="false" aria-label="Bewerbungen, mögliche Unternehmen und Weiteres durchsuchen"></label>
+    <div class="toolbar tbr">
+      <button type="button" class="tb" id="firmBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 9h4a1 1 0 0 1 1 1v11"/><path d="M2.5 21h19"/><path d="M8 8h3M8 12h3M8 16h3"/></svg>Mögliche Unternehmen <span class="n" id="firmN"></span></button>
+      <button type="button" class="tb" id="optBtn" aria-pressed="false" title="Andere Möglichkeiten (B-Optionen)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5" opacity=".55"/></svg>Weiteres <span class="n" id="optN"></span></button>
+    </div>
     </div>
   </header>
 
@@ -367,13 +378,6 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   <div id="lockNote" class="importbar" hidden><p><b>Deine Bewerbungsdaten sind privat.</b><small>Sie liegen im privaten Repository bw-daten. Klick oben auf „Token eintragen“ und gib deinen Fine-grained Token ein, um sie auf diesem Gerät zu sehen und zu bearbeiten.</small></p></div>
   <div id="importBar" hidden></div>
 
-  <div class="toolbar">
-      <button type="button" class="tb" id="nextBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Als Nächstes <span class="n" id="nextN"></span></button>
-      <button type="button" class="tb" id="eyeBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Alle Bewerbungen</button>
-      <button type="button" class="tb" id="offerBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.6 2.6L16 9.5"/></svg>Angebote <span class="n" id="offerN"></span></button>
-      <button type="button" class="tb" id="firmBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 9h4a1 1 0 0 1 1 1v11"/><path d="M2.5 21h19"/><path d="M8 8h3M8 12h3M8 16h3"/></svg>Mögliche Unternehmen <span class="n" id="firmN"></span></button>
-      <button type="button" class="tb" id="optBtn" aria-pressed="false" title="Andere Möglichkeiten (B-Optionen)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5" opacity=".55"/></svg>Weiteres <span class="n" id="optN"></span></button>
-  </div>
   <div id="detail" hidden></div>
   <div class="tree" id="tree" aria-label="Bewerbungspfad"></div>
 </div>
@@ -475,7 +479,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       if(N<=3) return {txt:"Antwort "+fmtS(r.frist), badge:rel(N), lvl:"soon", g:0, v:N};
       return {txt:"Antwort bis "+fmtS(r.frist), alt:["bis "+fmtS(r.frist)], lvl:"muted", g:3, v:N};
     }
-    if(n.c==="o"){ d=dateOf(r,p); return {txt:"Andere"+(d?" am "+fmtS(d):""), alt:d?[fmtS(d)]:[], lvl:"muted", g:6, v:-(d?Date.parse(d):0)}; }
+    if(n.c==="o"){ d=dateOf(r,p); return {txt:d?fmtS(d):"", alt:[], lvl:"muted", g:6, v:-(d?Date.parse(d):0)}; }
     d=dateOf(r,p); return {txt:"Absage"+(d?" am "+fmtS(d):""), alt:d?[fmtS(d)]:[], lvl:"muted", g:7, v:-(d?Date.parse(d):0)};
   }
   function prioSort(a,b){ var x=info(a), y=info(b); if(x.g!==y.g) return x.g-y.g; if(x.v!==y.v) return x.v-y.v; return (a.unternehmen||"").localeCompare(b.unternehmen||"","de"); }
@@ -532,7 +536,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     if(!loaded){ el.innerHTML='<li>'+(dbState==="none"?"Speichern ist in dieser Ansicht nicht verfügbar.":"wird geladen …")+'</li>'; return; }
     var c={prep:0,run:0,z:0,o:0,a:0};
     all().forEach(function(r){ var k=cOf(r); if(k==="prep") c.prep++; else if(k==="z") c.z++; else if(k==="o") c.o++; else if(k==="a") c.a++; else c.run++; });
-    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li><span class="dot rb" title="Bewerbung, Gespräch, 2. Gespräch"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-o"><span class="dot"></span><b>'+c.o+'</b> Andere</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
+    el.innerHTML='<li><span class="dot all" title="alle Einträge"></span><b>'+(c.prep+c.run+c.z+c.o+c.a)+'</b> Gesamt</li><li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li><span class="dot rb" title="Bewerbung, Gespräch, 2. Gespräch"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-o"><span class="dot"></span><b>'+c.o+'</b> Andere</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
     $("undoBtn").disabled=!undoStack.length;
     $("addBtn").disabled=!(loaded&&canWrite&&col&&token());
     $("offerN").textContent=c.z?c.z:"";
@@ -594,8 +598,10 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   var SORTS=[["alpha","A–Z","Nach Name sortieren (A–Z)"],["asc",CLK_F,"Nach Datum sortieren: Vergangenheit → Zukunft"],["desc",CLK_B,"Nach Datum sortieren: Zukunft → Vergangenheit"]];
   function entsH(s){ return s ? s*ENT+(s-1)*EGAP+4 : 0; }
   function boxH(n,k){ var s=isFold(k)?0:Math.min(n,capOf(k)); return HEAD + (s?4+entsH(s):0) + 6; }
-  /* Bei Zusage steht die Karte über der Beschriftung: dort ist im Baum meist Platz frei */
-  function isUp(k,n){ return (NODES[k].c==="z"||NODES[k].c==="o") && n>0 && !isFold(k); }
+  /* Obere Reihe (Andere, Zusage): Beschriftung oben, Karten darunter wie bei allen Stufen */
+  function isUp(k,n){ return false; }
+  /* Fester Platz je Kasten für die volle Kartenzahl, damit sich kein Pfad verschiebt, wenn Karten dazukommen */
+  function boxFix(k){ return HEAD+4+entsH(capOf(k))+6; }
   function labelOff(k,n){ return isUp(k,n) ? entsH(Math.min(n,capOf(k)))+4 : 0; }
   /* Datumsfeld: Klick öffnet den Kalender; Termine (Gespräche) mit Uhrzeit */
   function dtField(o){
@@ -696,23 +702,22 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
        Von jeder Stufe geht die Zusage nach oben und die Absage nach unten ab, beide gleich weit, soweit oben Platz ist. */
     function layout(g){
       Y={};
-      /* Ein Kasten ist durch seinen Innenabstand 10 px höher als H */
-      var dmin=70+g, upMin=HEAD+16+g, cols=[], i;
+      /* Obere Reihe: In Bearbeitung, Andere und beide Zusagen stehen oben auf einer Höhe, ihre Karten darunter.
+         Darunter die Hauptlinie (Bewerbung, Gespräch, 2. Gespräch), unter jeder Stufe die Absage.
+         Alle Abstände rechnen mit dem vollen Platz je Kasten, deshalb verschiebt sich nichts, wenn Karten dazukommen. */
+      var dmin=70+g, cols=[], i;
       for(i=1;i<=SPINE.length;i++){
         var par=SPINE[i-1], sp=SPINE[i]||null;
-        /* Absage beginnt unter den Karten der Stufe auf der Hauptlinie in derselben Spalte */
-        cols.push({sp:sp, z:par+".Z", a:par+".A", dn:Math.max(dmin, (sp?H[sp]:HEAD+6)+10+g)});
+        cols.push({sp:sp, z:par+".Z", a:par+".A", dn:Math.max(dmin, (sp?boxFix(sp):HEAD+6)+10+g)});
       }
-      /* In Bearbeitung steht oben in der ersten Spalte, Bewerbung darunter; über der Hauptlinie muss jede Zusage Platz haben */
-      var yS=H.prep+PG;
-      cols.forEach(function(c){ yS=Math.max(yS, LO[c.z]+upMin); });
-      var bottom=Math.max(H.prep, yS+H.B);
+      var yS=boxFix("prep")+PG;
+      cols.forEach(function(c){ yS=Math.max(yS, boxFix(c.z)+10+g); });
+      var bottom=yS+boxFix("B");
       cols.forEach(function(c){
-        var up=Math.max(upMin, Math.min(c.dn, yS-LO[c.z]));
-        Y[c.z]=yS-up-LO[c.z];
+        Y[c.z]=0;
         Y[c.a]=yS+c.dn;
         if(c.sp) Y[c.sp]=yS;
-        bottom=Math.max(bottom, Y[c.a]+H[c.a]);
+        bottom=Math.max(bottom, Y[c.a]+boxFix(c.a));
       });
       Y.B=yS; Y.prep=0;
       return bottom;
@@ -730,7 +735,8 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var CG0=Math.round(Math.min(72,Math.max(48,W*.045))), last=ORDER.some(function(k){ return depth(k)===3 && G[k].length; });
     var WT=last?[1.3,1.1,1,1]:[1.3,1.1,1], CAP=[440,380,360,360], LW=last?0:88;
     var u=(W-3*CG0-LW)/(last?4.4:3.4), CW=[], CX=[], acc=0;
-    WT.forEach(function(f,i){ CW[i]=Math.min(Math.floor(u*f), CAP[i]); }); if(!last) CW[3]=88;
+    /* Alle Kästen so breit wie die Spalte von „Gespräch“ */
+    var CWg=Math.min(Math.floor(u*WT[1]), CAP[1]); WT.forEach(function(f,i){ CW[i]=CWg; }); if(!last) CW[3]=88;
     var CG=Math.max(CG0, Math.floor((W-CW.reduce(function(x,w){ return x+w; },0))/3));
     CW.forEach(function(w,i){ CX[i]=acc; acc+=w+CG; });
     var html='<div class="tsizer" style="width:'+W+'px;height:'+(total+8)+'px"><div class="tcanvas" style="width:'+W+'px;height:'+(total+8)+'px"><svg id="wires"></svg>';
