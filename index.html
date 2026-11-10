@@ -12,7 +12,7 @@
 /* Layout: weiße Seite. Kopf, "Als Nächstes", fester Entscheidungsbaum über die volle Breite (schmal als eingerückte Liste), darunter Auge/Angebote und die Details. Bewusst nur helles Design. */
 :root{
   --bg:#FFFFFF; --soft:#F7F7F8; --hover:#F1F1F3; --ink:#0B0B0F; --ink2:#3F3F46; --muted:#7E7E88; --line:#E7E7EB; --line2:#CFCFD6;
-  --c-prep:#E5A500; --c-bew:#18181B; --c-t:#EA580C; --c-g:#0EA5E9; --c-g2:#1D4ED8; --c-z:#16A34A; --c-a:#DC2626;
+  --c-prep:#E5A500; --c-bew:#18181B; --c-t:#EA580C; --c-g:#0EA5E9; --c-g2:#1D4ED8; --c-z:#16A34A; --c-o:#7C3AED; --c-a:#DC2626;
   --late:#C2410C;
   --font:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -26,7 +26,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
 .page{max-width:1680px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:26px 72px;display:flex;flex-direction:column;gap:24px}
-.c-prep{--c:var(--c-prep)} .c-bew{--c:var(--c-bew)} .c-t{--c:var(--c-t)} .c-g{--c:var(--c-g)} .c-g2{--c:var(--c-g2)} .c-z{--c:var(--c-z)} .c-a{--c:var(--c-a)}
+.c-prep{--c:var(--c-prep)} .c-bew{--c:var(--c-bew)} .c-t{--c:var(--c-t)} .c-g{--c:var(--c-g)} .c-g2{--c:var(--c-g2)} .c-z{--c:var(--c-z)} .c-o{--c:var(--c-o)} .c-a{--c:var(--c-a)}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--c,var(--line2));flex:none;display:inline-block}
 
 /* Kopf */
@@ -387,7 +387,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function def(id,l,c,ch){ NODES[id]={id:id,l:l,c:c,ch:ch||[]}; ORDER.push(id); }
   def("prep","In Bearbeitung","prep",["B"]);
   def("B","Bewerbung","bew",["B.Z","B.G","B.A"]);
-  def("B.Z","Zusage","z");
+  def("B.Z","Andere","o"); /* nach der Bewerbung: andere Möglichkeit statt Zusage (z. B. anderes Programm vorgeschlagen, Aufnahme in den Bewerberpool) */
   def("B.G","Gespräch","g",["B.G.Z","B.G.G2","B.G.A"]);
   def("B.G.Z","Zusage","z");
   def("B.G.G2","2. Gespräch","g2",["B.G.G2.Z","B.G.G2.A"]);
@@ -399,7 +399,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   /* Ältere Einträge mit Test-Stufe (B.T…): Ein Test gehört jetzt zur Bewerbung, B.T.G wird B.G usw. */
   function isLegacy(k){ return typeof k==="string" && /^B\.T(\.|$)/.test(k); }
   function legacyK(k){ return isLegacy(k) ? k.replace(/^B\.T(?=\.|$)/,"B") : k; }
-  var STUFEN=[["prep","In Bearbeitung"],["bew","Bewerbung"],["g","Gespräch"],["g2","2. Gespräch"],["z","Zusage"],["a","Absage"]];
+  var STUFEN=[["prep","In Bearbeitung"],["bew","Bewerbung"],["g","Gespräch"],["g2","2. Gespräch"],["z","Zusage"],["o","Andere"],["a","Absage"]];
   var ARTEN=[["Vz","Vollzeit"],["Tz","Teilzeit"],["Tr","Trainee"],["Pr","Praktikum"]];
   var TERMIN={g:1,g2:1};
   function depth(id){ return id==="prep"?0:id.split(".").length-1; }
@@ -475,10 +475,11 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
       if(N<=3) return {txt:"Antwort "+fmtS(r.frist), badge:rel(N), lvl:"soon", g:0, v:N};
       return {txt:"Antwort bis "+fmtS(r.frist), alt:["bis "+fmtS(r.frist)], lvl:"muted", g:3, v:N};
     }
+    if(n.c==="o"){ d=dateOf(r,p); return {txt:"Andere"+(d?" am "+fmtS(d):""), alt:d?[fmtS(d)]:[], lvl:"muted", g:6, v:-(d?Date.parse(d):0)}; }
     d=dateOf(r,p); return {txt:"Absage"+(d?" am "+fmtS(d):""), alt:d?[fmtS(d)]:[], lvl:"muted", g:7, v:-(d?Date.parse(d):0)};
   }
   function prioSort(a,b){ var x=info(a), y=info(b); if(x.g!==y.g) return x.g-y.g; if(x.v!==y.v) return x.v-y.v; return (a.unternehmen||"").localeCompare(b.unternehmen||"","de"); }
-  function rank(r){ var p=pfad(r), c=NODES[p].c; if(c==="z") return 100+depth(p); if(c==="a") return -100+depth(p); if(p==="prep") return -1; return depth(p)+(c==="g2"?.5:0); }
+  function rank(r){ var p=pfad(r), c=NODES[p].c; if(c==="z") return 100+depth(p); if(c==="o") return 50+depth(p); if(c==="a") return -100+depth(p); if(p==="prep") return -1; return depth(p)+(c==="g2"?.5:0); }
 
   /* ---------- Speichern ---------- */
   function errMsg(e){ var c=e&&e.code; if(c==="quota_exceeded") return "Browserspeicher voll. Bitte exportieren und alte Einträge löschen."; if(c==="no_storage") return "Dieser Browser erlaubt keinen lokalen Speicher (z. B. privates Fenster)."; return "Speichern fehlgeschlagen."; }
@@ -519,7 +520,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
     var r=view(id); if(!r||!NODES[to]) return; var from=pfad(r); if(from===to) return;
     var keep=chain(to), D=dates(r).filter(function(x){ return keep.indexOf(x.k)>=0; });
     var c=NODES[to].c;
-    // Bewerbung, Zusage, Absage bekommen heute; Termine (Gespräche) trägst du selbst ein
+    // Bewerbung, Zusage, Andere, Absage bekommen heute; Termine (Gespräche) trägst du selbst ein
     if(to!=="prep" && !TERMIN[c] && !D.some(function(x){ return x.k===to; }) && (to!=="B" || from==="prep")) D.push({k:to, d:today()});
     var patch={pfad:to, daten:D};
     undoable(id, patch, (r.unternehmen||"Ohne Namen")+" → "+NODES[to].l+(TERMIN[c]?". Termin eintragen":""));
@@ -529,9 +530,9 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function renderStats(){
     var el=$("stats");
     if(!loaded){ el.innerHTML='<li>'+(dbState==="none"?"Speichern ist in dieser Ansicht nicht verfügbar.":"wird geladen …")+'</li>'; return; }
-    var c={prep:0,run:0,z:0,a:0};
-    all().forEach(function(r){ var k=cOf(r); if(k==="prep") c.prep++; else if(k==="z") c.z++; else if(k==="a") c.a++; else c.run++; });
-    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li><span class="dot rb" title="Bewerbung, Gespräch, 2. Gespräch"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
+    var c={prep:0,run:0,z:0,o:0,a:0};
+    all().forEach(function(r){ var k=cOf(r); if(k==="prep") c.prep++; else if(k==="z") c.z++; else if(k==="o") c.o++; else if(k==="a") c.a++; else c.run++; });
+    el.innerHTML='<li class="c-prep"><span class="dot"></span><b>'+c.prep+'</b> in Bearbeitung</li><li><span class="dot rb" title="Bewerbung, Gespräch, 2. Gespräch"></span><b>'+c.run+'</b> laufend</li><li class="c-z"><span class="dot"></span><b>'+c.z+'</b> Zusage</li><li class="c-o"><span class="dot"></span><b>'+c.o+'</b> Andere</li><li class="c-a"><span class="dot"></span><b>'+c.a+'</b> Absage</li>';
     $("undoBtn").disabled=!undoStack.length;
     $("addBtn").disabled=!(loaded&&canWrite&&col&&token());
     $("offerN").textContent=c.z?c.z:"";
@@ -594,7 +595,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
   function entsH(s){ return s ? s*ENT+(s-1)*EGAP+4 : 0; }
   function boxH(n,k){ var s=isFold(k)?0:Math.min(n,capOf(k)); return HEAD + (s?4+entsH(s):0) + 6; }
   /* Bei Zusage steht die Karte über der Beschriftung: dort ist im Baum meist Platz frei */
-  function isUp(k,n){ return NODES[k].c==="z" && n>0 && !isFold(k); }
+  function isUp(k,n){ return (NODES[k].c==="z"||NODES[k].c==="o") && n>0 && !isFold(k); }
   function labelOff(k,n){ return isUp(k,n) ? entsH(Math.min(n,capOf(k)))+4 : 0; }
   /* Datumsfeld: Klick öffnet den Kalender; Termine (Gespräche) mit Uhrzeit */
   function dtField(o){
@@ -1021,7 +1022,7 @@ textarea.bare{min-height:110px;resize:vertical;line-height:1.5;margin-top:4px}
 
   /* ---------- Detail einer Bewerbung ---------- */
   function inp(r,k,type,ph){ if(type==="date") return dtField({kind:"field", k:k, job:r.id, d:r[k]||"", label:k==="eintritt"?"Eintritt wählen":"Datum wählen"}); return '<input class="bare" data-k="'+k+'"'+(type?' type="'+type+'"':'')+' value="'+esc(r[k]||"")+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+(canWrite?'':' disabled')+'>'; }
-  function dateLabel(k){ var c=NODES[k].c; return c==="bew"?"beworben am":TERMIN[c]?"Termin am":c==="z"?"Zusage erhalten am":"Absage erhalten am"; }
+  function dateLabel(k){ var c=NODES[k].c; return c==="bew"?"beworben am":TERMIN[c]?"Termin am":c==="z"?"Zusage erhalten am":c==="o"?"erhalten am":"Absage erhalten am"; }
   function renderJob(){
     var r=view(ui.job); if(!r){ ui.mode="none"; ui.job=null; return ""; }
     var p=pfad(r), n=NODES[p], ro=canWrite?'':' disabled', t=today();
